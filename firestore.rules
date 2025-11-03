@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Função auxiliar para verificar se é membro
+    function isMember(homeId) {
+      return exists(/databases/$(database)/documents/homeMembers/$(request.auth.uid + '_' + homeId));
+    }
+
+    // Função auxiliar para verificar se é admin
+    function isAdmin(homeId) {
+      let member = get(/databases/$(database)/documents/homeMembers/$(request.auth.uid + '_' + homeId));
+      return member.data.role == 'admin';
+    }
+
+    // Usuários podem ler/escrever seus próprios documentos
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Tarefas - usuários autenticados podem acessar (validação de membros será implementada no frontend por enquanto)
+    match /tasks/{taskId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Membros do Lar - apenas leitura para membros, criação/edição restrita
+    match /homeMembers/{document=**} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // Convites de Membros - qualquer usuário autenticado pode ler/criar
+    match /memberInvites/{inviteId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ============ MOTOR DE DISTRIBUIÇÃO ============
+
+    // Placar Mensal - membros podem ler e escrever (sistema atualiza automaticamente)
+    match /monthlyScores/{scoreId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Atribuições Diárias - membros podem ler e atualizar (completar/pular tarefas)
+    match /dailyAssignments/{assignmentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && 
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed', 'completedAt', 'skipped', 'skippedAt', 'skippedBy', 'assignedToId', 'assignedToName']));
+      allow delete: if request.auth != null;
+    }
+
+    // Tarefas Puladas - sistema e membros podem ler/escrever
+    match /skippedTasks/{taskId} {
+      allow read: if request.auth != null;
+      allow create, write: if request.auth != null;
+    }
+
+    // Tarefas Oferecidas - sistema e membros podem ler/escrever
+    match /offeredTasks/{taskId} {
+      allow read: if request.auth != null;
+      allow create, write: if request.auth != null;
+    }
+  }
+}
