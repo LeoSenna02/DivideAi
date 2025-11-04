@@ -39,6 +39,8 @@ export function RewardsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'all'>('month');
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 6;
 
   // Carregar dados
   useEffect(() => {
@@ -179,10 +181,10 @@ export function RewardsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="mt-4 text-secondary-600">Carregando relatório...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 dark:border-primary-400 mx-auto"></div>
+          <p className="mt-4 text-secondary-600 dark:text-gray-300">Carregando relatório...</p>
         </div>
       </div>
     );
@@ -194,14 +196,20 @@ export function RewardsPage() {
   const totalCompleted = filteredAssignments.filter(a => a.completed).length;
   const totalAssigned = filteredAssignments.length;
 
+  // Paginação para tarefas
+  const totalPages = Math.ceil(taskReports.length / tasksPerPage);
+  const startIndex = (currentPage - 1) * tasksPerPage;
+  const endIndex = startIndex + tasksPerPage;
+  const currentTasks = taskReports.slice(startIndex, endIndex);
+
   return (
-    <div className="min-h-screen bg-secondary-50 pb-24">
+    <div className="min-h-screen bg-secondary-50 dark:bg-gray-900 pb-24">
       {/* Header */}
-      <header className="bg-neutral-white shadow-sm border-b border-secondary-200 sticky top-0 z-10">
+      <header className="bg-neutral-white dark:bg-gray-800 shadow-sm border-b border-secondary-200 dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4">
-            <h1 className="text-2xl font-bold text-secondary-900">Relatório de Tarefas</h1>
-            <p className="text-sm text-secondary-600 mt-1">Análise completa de desempenho</p>
+            <h1 className="text-2xl font-bold text-secondary-900 dark:text-white">Relatório de Tarefas</h1>
+            <p className="text-sm text-secondary-600 dark:text-gray-300 mt-1">Análise completa de desempenho</p>
           </div>
         </div>
       </header>
@@ -210,39 +218,48 @@ export function RewardsPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Erro */}
         {error && (
-          <div className="mb-4 p-4 bg-danger-50 border border-danger-200 rounded-lg">
-            <p className="text-danger-700">{error}</p>
+          <div className="mb-4 p-4 bg-danger-50 dark:bg-red-900/20 border border-danger-200 dark:border-red-800 rounded-lg">
+            <p className="text-danger-700 dark:text-red-300">{error}</p>
           </div>
         )}
 
         {/* Filtro de Período */}
         <div className="mb-6 flex gap-2">
           <button
-            onClick={() => setSelectedPeriod('week')}
+            onClick={() => {
+              setSelectedPeriod('week');
+              setCurrentPage(1);
+            }}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               selectedPeriod === 'week'
                 ? 'bg-primary-500 text-white'
-                : 'bg-neutral-white border border-secondary-200 text-secondary-600 hover:border-primary-300'
+                : 'bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-600 text-secondary-600 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-500'
             }`}
           >
             Últimos 7 dias
           </button>
           <button
-            onClick={() => setSelectedPeriod('month')}
+            onClick={() => {
+              setSelectedPeriod('month');
+              setCurrentPage(1);
+            }}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               selectedPeriod === 'month'
                 ? 'bg-primary-500 text-white'
-                : 'bg-neutral-white border border-secondary-200 text-secondary-600 hover:border-primary-300'
+                : 'bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-600 text-secondary-600 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-500'
             }`}
           >
             Este mês
           </button>
           <button
-            onClick={() => setSelectedPeriod('all')}
+            onClick={() => {
+              setSelectedPeriod('all');
+              setCurrentPage(1);
+            }}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               selectedPeriod === 'all'
                 ? 'bg-primary-500 text-white'
-                : 'bg-neutral-white border border-secondary-200 text-secondary-600 hover:border-primary-300'
+                : 'bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-600 text-secondary-600 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-500'
             }`}
           >
             Todos os tempos
@@ -251,70 +268,70 @@ export function RewardsPage() {
 
         {/* Resumo Geral */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-neutral-white rounded-lg p-4 border border-secondary-200">
-            <p className="text-sm text-secondary-600 mb-1">Total Atribuído</p>
-            <p className="text-3xl font-bold text-primary-600">{totalAssigned}</p>
+          <div className="bg-neutral-white dark:bg-gray-800 rounded-lg p-4 border border-secondary-200 dark:border-gray-700">
+            <p className="text-sm text-secondary-600 dark:text-gray-300 mb-1">Total Atribuído</p>
+            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{totalAssigned}</p>
           </div>
-          <div className="bg-neutral-white rounded-lg p-4 border border-secondary-200">
-            <p className="text-sm text-secondary-600 mb-1">Completadas</p>
-            <p className="text-3xl font-bold text-success-600">{totalCompleted}</p>
+          <div className="bg-neutral-white dark:bg-gray-800 rounded-lg p-4 border border-secondary-200 dark:border-gray-700">
+            <p className="text-sm text-secondary-600 dark:text-gray-300 mb-1">Completadas</p>
+            <p className="text-3xl font-bold text-success-600 dark:text-success-400">{totalCompleted}</p>
           </div>
-          <div className="bg-neutral-white rounded-lg p-4 border border-secondary-200">
-            <p className="text-sm text-secondary-600 mb-1">Taxa Geral</p>
-            <p className="text-3xl font-bold text-primary-600">
+          <div className="bg-neutral-white dark:bg-gray-800 rounded-lg p-4 border border-secondary-200 dark:border-gray-700">
+            <p className="text-sm text-secondary-600 dark:text-gray-300 mb-1">Taxa Geral</p>
+            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">
               {totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0}%
             </p>
           </div>
-          <div className="bg-neutral-white rounded-lg p-4 border border-secondary-200">
-            <p className="text-sm text-secondary-600 mb-1">Membros Ativos</p>
-            <p className="text-3xl font-bold text-primary-600">{memberReports.length}</p>
+          <div className="bg-neutral-white dark:bg-gray-800 rounded-lg p-4 border border-secondary-200 dark:border-gray-700">
+            <p className="text-sm text-secondary-600 dark:text-gray-300 mb-1">Membros Ativos</p>
+            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{memberReports.length}</p>
           </div>
         </div>
 
         {/* Desempenho por Membro */}
         <section className="mb-6">
-          <h2 className="text-xl font-bold text-secondary-900 mb-4">Desempenho por Membro</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h2 className="text-xl font-bold text-secondary-900 dark:text-white mb-4">Desempenho por Membro</h2>
+          <div className="grid grid-cols-3 gap-4">
             {memberReports.map(member => (
-              <div key={member.userId} className="bg-neutral-white rounded-lg p-4 border border-secondary-200">
+              <div key={member.userId} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold text-primary-600">{member.initials}</span>
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center border-2 border-blue-200 dark:border-blue-700">
+                      <span className="text-sm font-bold text-blue-700 dark:text-blue-300">{member.initials}</span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-secondary-900">{member.name}</h3>
-                      <p className="text-xs text-secondary-500">
+                      <h3 className="font-semibold text-secondary-900 dark:text-white">{member.name}</h3>
+                      <p className="text-xs text-secondary-500 dark:text-gray-400">
                         {member.totalCompleted}/{member.totalAssigned} tarefas
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-primary-600">{member.completionRate}%</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{member.completionRate}%</p>
                   </div>
                 </div>
 
                 {/* Barra de progresso */}
-                <div className="w-full h-2 bg-secondary-200 rounded-full overflow-hidden mb-3">
+                <div className="w-full h-2 bg-blue-200 dark:bg-blue-800 rounded-full overflow-hidden mb-3">
                   <div
-                    className="h-full bg-primary-500 transition-all"
+                    className="h-full bg-blue-500 dark:bg-blue-400 transition-all"
                     style={{ width: `${member.completionRate}%` }}
                   ></div>
                 </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="text-center p-2 bg-secondary-50 rounded">
-                    <p className="text-secondary-600">Peso Feito</p>
-                    <p className="font-bold text-secondary-900">{member.weightCompleted}/{member.totalWeight}</p>
+                  <div className="text-center p-2 bg-blue-100 dark:bg-blue-900/40 rounded border border-blue-200 dark:border-blue-700">
+                    <p className="text-blue-700 dark:text-blue-300">Peso Feito</p>
+                    <p className="font-bold text-blue-900 dark:text-blue-100">{member.weightCompleted}/{member.totalWeight}</p>
                   </div>
-                  <div className="text-center p-2 bg-secondary-50 rounded">
-                    <p className="text-secondary-600">Streak</p>
-                    <p className="font-bold text-secondary-900">{member.streak}d</p>
+                  <div className="text-center p-2 bg-blue-100 dark:bg-blue-900/40 rounded border border-blue-200 dark:border-blue-700">
+                    <p className="text-blue-700 dark:text-blue-300">Streak</p>
+                    <p className="font-bold text-blue-900 dark:text-blue-100">{member.streak}d</p>
                   </div>
-                  <div className="text-center p-2 bg-secondary-50 rounded">
-                    <p className="text-secondary-600">Última</p>
-                    <p className="font-bold text-secondary-900">
+                  <div className="text-center p-2 bg-blue-100 dark:bg-blue-900/40 rounded border border-blue-200 dark:border-blue-700">
+                    <p className="text-blue-700 dark:text-blue-300">Última</p>
+                    <p className="font-bold text-blue-900 dark:text-blue-100">
                       {member.lastCompletion
                         ? new Date(member.lastCompletion).toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' })
                         : '-'}
@@ -328,50 +345,56 @@ export function RewardsPage() {
 
         {/* Relatório de Tarefas */}
         <section>
-          <h2 className="text-xl font-bold text-secondary-900 mb-4">Desempenho das Tarefas</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-secondary-900 dark:text-white">Desempenho das Tarefas</h2>
+            <div className="text-sm text-secondary-600 dark:text-gray-400">
+              {startIndex + 1}-{Math.min(endIndex, taskReports.length)} de {taskReports.length} tarefas
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {taskReports.map(task => (
-              <div key={task.taskId} className="bg-neutral-white rounded-lg p-4 border border-secondary-200 hover:shadow-md transition-shadow">
+            {currentTasks.map(task => (
+              <div key={task.taskId} className="bg-neutral-white dark:bg-gray-800 rounded-lg p-4 border border-secondary-200 dark:border-gray-700 hover:shadow-md transition-shadow relative">
+                <div className="absolute top-3 right-3 w-2 h-2 bg-green-400 rounded-full" title="Tarefa"></div>
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-secondary-900 text-sm leading-tight flex-1 pr-2">
+                  <h3 className="font-semibold text-secondary-900 dark:text-white text-sm leading-tight flex-1 pr-2">
                     {task.title}
                   </h3>
-                  <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 rounded text-xs font-semibold whitespace-nowrap">
+                  <span className="inline-block px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded text-xs font-semibold whitespace-nowrap">
                     Peso {task.weight}/5
                   </span>
                 </div>
 
                 {/* Barra de progresso */}
-                <div className="w-full h-3 bg-secondary-200 rounded-full overflow-hidden mb-3">
+                <div className="w-full h-3 bg-secondary-200 dark:bg-gray-600 rounded-full overflow-hidden mb-3">
                   <div
-                    className="h-full bg-primary-500 transition-all duration-300"
+                    className="h-full bg-primary-500 dark:bg-primary-400 transition-all duration-300"
                     style={{ width: `${task.completionRate}%` }}
                   ></div>
                 </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="text-center p-2 bg-secondary-50 rounded">
-                    <p className="text-secondary-600 mb-1">Atribuições</p>
-                    <p className="font-bold text-secondary-900 text-lg">{task.totalAssignments}</p>
+                  <div className="text-center p-2 bg-secondary-50 dark:bg-gray-700 rounded">
+                    <p className="text-secondary-600 dark:text-gray-300 mb-1">Atribuições</p>
+                    <p className="font-bold text-secondary-900 dark:text-white text-lg">{task.totalAssignments}</p>
                   </div>
-                  <div className="text-center p-2 bg-secondary-50 rounded">
-                    <p className="text-secondary-600 mb-1">Completadas</p>
-                    <p className="font-bold text-secondary-900 text-lg">{task.totalCompletions}</p>
+                  <div className="text-center p-2 bg-secondary-50 dark:bg-gray-700 rounded">
+                    <p className="text-secondary-600 dark:text-gray-300 mb-1">Completadas</p>
+                    <p className="font-bold text-secondary-900 dark:text-white text-lg">{task.totalCompletions}</p>
                   </div>
                 </div>
 
                 {/* Taxa de conclusão */}
-                <div className="mt-3 pt-3 border-t border-secondary-100">
+                <div className="mt-3 pt-3 border-t border-secondary-100 dark:border-gray-600">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-secondary-600">Taxa de Conclusão</span>
-                    <span className="text-lg font-bold text-primary-600">{task.completionRate}%</span>
+                    <span className="text-sm text-secondary-600 dark:text-gray-300">Taxa de Conclusão</span>
+                    <span className="text-lg font-bold text-primary-600 dark:text-primary-400">{task.completionRate}%</span>
                   </div>
                 </div>
 
                 {/* Última conclusão */}
                 {task.lastCompleted && (
-                  <div className="mt-2 text-xs text-secondary-500">
+                  <div className="mt-2 text-xs text-secondary-500 dark:text-gray-400">
                     Última: {new Date(task.lastCompleted).toLocaleDateString('pt-BR', {
                       day: 'numeric',
                       month: 'short',
@@ -382,6 +405,33 @@ export function RewardsPage() {
               </div>
             ))}
           </div>
+
+          {/* Controles de Paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-600 rounded-lg text-secondary-600 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Anterior
+              </button>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-secondary-600 dark:text-gray-400">
+                  Página {currentPage} de {totalPages}
+                </span>
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-600 rounded-lg text-secondary-600 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Próxima
+              </button>
+            </div>
+          )}
         </section>
       </main>
 

@@ -59,6 +59,11 @@ export function TaskCard({ person, otherMembers, onTaskToggle, onSkipTask, onSwa
     return pendingSwapRequests.find(request => request.requestedAssignmentId === assignmentId);
   };
 
+  // Verificar se o usuário atual enviou uma solicitação para esta tarefa
+  const getSentSwapRequest = (assignmentId: string): TaskSwapRequest | undefined => {
+    return pendingSwapRequests.find(request => request.offeredAssignmentId === assignmentId && request.requestedByUserId === currentUserId);
+  };
+
   // Manipular clique na tarefa (para solicitações pendentes)
   const handleTaskClick = (assignment: DailyAssignment) => {
     const pendingRequest = getPendingSwapRequest(assignment.id);
@@ -99,27 +104,27 @@ export function TaskCard({ person, otherMembers, onTaskToggle, onSkipTask, onSwa
   };
 
   return (
-    <div className="bg-neutral-white rounded-lg overflow-hidden shadow-sm border border-secondary-200">
+    <div className="bg-neutral-white dark:bg-secondary-800 rounded-lg overflow-hidden shadow-sm border border-secondary-200 dark:border-secondary-700">
       {/* Header da Pessoa */}
-      <div className="bg-primary-50 px-4 py-3 border-b border-secondary-200">
+      <div className="bg-primary-50 dark:bg-primary-900 px-4 py-3 border-b border-secondary-200 dark:border-secondary-700">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
               <span className="text-xs font-bold text-primary-600">{person.initials}</span>
             </div>
-            <h3 className="font-semibold text-secondary-900">{person.name}</h3>
+            <h3 className="font-semibold text-secondary-900 dark:text-secondary-100">{person.name}</h3>
           </div>
           <div className="text-right">
-            <p className="text-xs text-secondary-500">
+            <p className="text-xs text-secondary-500 dark:text-secondary-400">
               {person.completed}/{person.total} concluídas
             </p>
-            <p className="text-sm font-bold text-primary-600">
+            <p className="text-sm font-bold text-primary-600 dark:text-primary-400">
               {Math.round(person.currentScore)} pts
             </p>
           </div>
         </div>
         {/* Barra de Progresso Horizontal */}
-        <div className="w-full h-1 bg-secondary-200 rounded-full overflow-hidden">
+        <div className="w-full h-1 bg-secondary-200 dark:bg-secondary-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-primary-500 transition-all duration-300"
             style={{ width: `${(person.completed / person.total) * 100}%` }}
@@ -128,7 +133,7 @@ export function TaskCard({ person, otherMembers, onTaskToggle, onSkipTask, onSwa
       </div>
 
       {/* Tarefas da Pessoa */}
-      <div className="divide-y divide-secondary-100 max-h-48 overflow-y-auto scroll-elegant">
+      <div className="divide-y divide-secondary-100 dark:divide-secondary-700 max-h-48 overflow-y-auto scroll-elegant">
         {person.assignments
           .sort((a, b) => {
             // Tarefas não completadas primeiro (false vem antes de true)
@@ -140,13 +145,15 @@ export function TaskCard({ person, otherMembers, onTaskToggle, onSkipTask, onSwa
           })
           .map((assignment) => {
           const pendingRequest = getPendingSwapRequest(assignment.id);
+          const sentRequest = getSentSwapRequest(assignment.id);
           const hasPendingSwap = !!pendingRequest;
+          const hasSentSwap = !!sentRequest;
 
           return (
             <div
               key={assignment.id}
-              className={`px-4 py-3 flex items-center space-x-3 hover:bg-secondary-25 cursor-pointer transition-colors ${
-                hasPendingSwap ? 'bg-warning-50 border-l-4 border-warning-400' : ''
+              className={`px-4 py-3 flex items-center space-x-3 hover:bg-secondary-25 dark:hover:bg-secondary-700 cursor-pointer transition-colors ${
+                hasPendingSwap ? 'border-l-4 border-b-4 border-warning-200 dark:border-warning-600' : ''
               }`}
               onClick={() => handleTaskClick(assignment)}
             >
@@ -158,31 +165,41 @@ export function TaskCard({ person, otherMembers, onTaskToggle, onSkipTask, onSwa
                 <span
                   className={`block ${
                     assignment.completed
-                      ? 'line-through text-secondary-400'
-                      : 'text-secondary-900'
+                      ? 'line-through text-secondary-400 dark:text-secondary-500'
+                      : 'text-secondary-900 dark:text-secondary-100'
                   }`}
                 >
                   {assignment.taskTitle}
                 </span>
-                <span className="text-xs text-secondary-500">
-                  Peso: {assignment.taskWeight}/5
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <span className="text-xs text-secondary-500 dark:text-secondary-400">
+                    Peso: {assignment.taskWeight}/5
+                  </span>
                   {hasPendingSwap && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-50 text-warning-600 dark:bg-warning-700 dark:text-warning-50 border border-warning-100 dark:border-warning-600">
                       <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m0 0h4m10 0v12m0 0l4-4m0 0h-4" />
                       </svg>
                       Troca pendente
                     </span>
                   )}
+                  {hasSentSwap && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-info-50 text-info-600 dark:bg-info-700 dark:text-info-50 border border-info-100 dark:border-info-600">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Solicitado
+                    </span>
+                  )}
                   {assignment.swapped && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-100 dark:bg-success-800 text-success-800 dark:text-success-200">
                       <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m0 0h4m10 0v12m0 0l4-4m0 0h-4" />
                       </svg>
                       Trocado
                     </span>
                   )}
-                </span>
+                </div>
               </div>
               {/* Ícones de Pular e Trocar */}
               <div className="flex items-center space-x-2">
@@ -192,7 +209,7 @@ export function TaskCard({ person, otherMembers, onTaskToggle, onSkipTask, onSwa
                       e.stopPropagation();
                       handleSkipClick(assignment);
                     }}
-                    className="p-1 text-secondary-400 hover:text-warning-600 transition-colors"
+                    className="p-1 text-secondary-400 dark:text-secondary-500 hover:text-warning-600 dark:hover:text-warning-400 transition-colors"
                     title="Pular tarefa"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,7 +223,7 @@ export function TaskCard({ person, otherMembers, onTaskToggle, onSkipTask, onSwa
                       e.stopPropagation();
                       onSwapTask?.(assignment);
                     }}
-                    className="p-1 text-secondary-400 hover:text-primary-600 transition-colors"
+                    className="p-1 text-secondary-400 dark:text-secondary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                     title="Propor troca"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,6 +257,7 @@ export function TaskCard({ person, otherMembers, onTaskToggle, onSkipTask, onSwa
         onAccept={handleAcceptSwap}
         onDecline={handleDeclineSwap}
         loading={swapActionLoading}
+        currentUserId={currentUserId}
       />
     </div>
   );

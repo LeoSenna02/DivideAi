@@ -110,7 +110,9 @@ export function CalendarPage() {
   // Usuários únicos no mês
   const uniqueUsers = Array.from(
     new Map(
-      monthAssignments.map(a => [a.assignedToId, a.assignedToName])
+      monthAssignments
+        .filter(a => a.assignedToId && a.assignedToId.trim() !== '') // Filtrar apenas assignments com assignedToId válido
+        .map(a => [a.assignedToId, a.assignedToName])
     )
   ).map(([id, name]) => ({ id, name }));
 
@@ -131,13 +133,13 @@ export function CalendarPage() {
   };
 
   return (
-    <div className="min-h-screen bg-secondary-50 pb-20">
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 pb-20">
       {/* Header */}
-      <header className="bg-neutral-white shadow-sm border-b border-secondary-200 sticky top-0 z-10">
+      <header className="bg-neutral-white dark:bg-secondary-800 shadow-sm border-b border-secondary-200 dark:border-secondary-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4">
-            <h1 className="text-2xl font-bold text-secondary-900">Calendário</h1>
-            <p className="text-sm text-secondary-600 mt-1">Visualize e gerencie tarefas por data</p>
+            <h1 className="text-2xl font-bold text-secondary-900 dark:text-secondary-100">Calendário</h1>
+            <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">Visualize e gerencie tarefas por data</p>
           </div>
         </div>
       </header>
@@ -151,29 +153,29 @@ export function CalendarPage() {
         )}
 
         {/* Estatísticas do Mês */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-primary-500">
-            <div className="text-xs sm:text-sm text-secondary-600 font-medium">Total de Tarefas</div>
-            <div className="text-2xl sm:text-3xl font-bold text-secondary-900 mt-1">{monthStats.total}</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow p-3 sm:p-4 border-l-4 border-primary-500">
+            <div className="text-xs sm:text-sm text-secondary-600 dark:text-secondary-400 font-medium">Total de Tarefas</div>
+            <div className="text-2xl sm:text-3xl font-bold text-secondary-900 dark:text-secondary-100 mt-1">{monthStats.total}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-success-500">
-            <div className="text-xs sm:text-sm text-secondary-600 font-medium">Concluídas</div>
-            <div className="text-2xl sm:text-3xl font-bold text-success-600 mt-1">{monthStats.completed}</div>
+          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow p-3 sm:p-4 border-l-4 border-success-500">
+            <div className="text-xs sm:text-sm text-secondary-600 dark:text-secondary-400 font-medium">Concluídas</div>
+            <div className="text-2xl sm:text-3xl font-bold text-success-600 dark:text-success-400 mt-1">{monthStats.completed}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-warning-500">
-            <div className="text-xs sm:text-sm text-secondary-600 font-medium">Pendentes</div>
-            <div className="text-2xl sm:text-3xl font-bold text-warning-600 mt-1">{monthStats.pending}</div>
+          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow p-3 sm:p-4 border-l-4 border-warning-500">
+            <div className="text-xs sm:text-sm text-secondary-600 dark:text-secondary-400 font-medium">Pendentes</div>
+            <div className="text-2xl sm:text-3xl font-bold text-warning-600 dark:text-warning-400 mt-1">{monthStats.pending}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-secondary-300 col-span-2 sm:col-span-1">
-            <div className="text-xs sm:text-sm text-secondary-600 font-medium">Taxa de Conclusão</div>
-            <div className="text-2xl sm:text-3xl font-bold text-secondary-900 mt-1">
+          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow p-3 sm:p-4 border-l-4 border-secondary-300 dark:border-secondary-600">
+            <div className="text-xs sm:text-sm text-secondary-600 dark:text-secondary-400 font-medium">Taxa de Conclusão</div>
+            <div className="text-2xl sm:text-3xl font-bold text-secondary-900 dark:text-secondary-100 mt-1">
               {monthStats.total > 0 ? Math.round((monthStats.completed / monthStats.total) * 100) : 0}%
             </div>
           </div>
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6 sm:mb-8">
+        <div className="bg-white dark:bg-secondary-800 rounded-lg shadow p-4 mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 items-start sm:items-start">
             <div className="w-full sm:w-auto sm:flex-1 sm:min-w-max">
               <Select
@@ -214,8 +216,8 @@ export function CalendarPage() {
 
         {/* Resumo da Semana Selecionada */}
         {currentDate && (
-          <div className="mt-6 sm:mt-8 bg-white rounded-lg shadow p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-secondary-900 mb-4">
+          <div className="mt-6 sm:mt-8 bg-white dark:bg-secondary-800 rounded-lg shadow p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-secondary-900 dark:text-secondary-100 mb-4">
               Tarefas de {currentDate.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </h3>
 
@@ -224,9 +226,9 @@ export function CalendarPage() {
               const currentDateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
               return a.dateKey === currentDateKey;
             }).length > 0 ? (
-              <div className="bg-secondary-50 rounded-lg border border-secondary-200">
+              <div className="bg-secondary-50 dark:bg-secondary-700 rounded-lg border border-secondary-200 dark:border-secondary-600">
                 <div className="max-h-80 overflow-y-auto scroll-elegant">
-                  <div className="divide-y divide-secondary-200">
+                  <div className="divide-y divide-secondary-100 dark:divide-secondary-600">
                     {filteredAssignments
                       .filter(a => {
                         // Comparar diretamente as chaves de data (formato YYYY-MM-DD)
@@ -245,35 +247,35 @@ export function CalendarPage() {
                         <div
                           key={assignment.id}
                           onClick={() => !assignment.isVirtual && setSelectedAssignment(assignment)}
-                          className={`p-3 sm:p-4 cursor-pointer transition-all hover:bg-secondary-100 ${
+                          className={`p-3 sm:p-4 cursor-pointer transition-all hover:bg-secondary-100 dark:hover:bg-secondary-600 ${
                             assignment.completed
-                              ? 'bg-success-25'
+                              ? 'bg-success-25 dark:bg-success-900/20'
                               : assignment.isVirtual
-                              ? 'bg-gray-25 opacity-60'
-                              : 'bg-warning-25 hover:bg-warning-50'
+                              ? 'bg-gray-25 dark:bg-gray-800 opacity-60'
+                              : 'bg-warning-25 dark:bg-warning-900/20 hover:bg-warning-50 dark:hover:bg-warning-900/30'
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3 flex-1 min-w-0">
                               <div className={`flex-shrink-0 w-3 h-3 rounded-full ${
-                                assignment.completed ? 'bg-success-500' : assignment.isVirtual ? 'bg-gray-400' : 'bg-warning-500'
+                                assignment.completed ? 'bg-success-500' : assignment.isVirtual ? 'bg-gray-400 dark:bg-gray-500' : 'bg-warning-500'
                               }`}></div>
                               <div className="flex-1 min-w-0">
                                 <h4 className={`font-medium text-sm sm:text-base truncate ${
-                                  assignment.completed ? 'line-through text-secondary-500' : assignment.isVirtual ? 'text-secondary-400' : 'text-secondary-900'
+                                  assignment.completed ? 'line-through text-secondary-500 dark:text-secondary-400' : assignment.isVirtual ? 'text-secondary-400 dark:text-secondary-500' : 'text-secondary-900 dark:text-secondary-100'
                                 }`}>
                                   {assignment.taskTitle}
                                 </h4>
-                                <div className="flex items-center gap-3 sm:gap-4 mt-1 text-xs sm:text-sm text-secondary-600">
+                                <div className="flex items-center gap-3 sm:gap-4 mt-1 text-xs sm:text-sm text-secondary-600 dark:text-secondary-400">
                                   <div className="flex items-center gap-1">
                                     <FiUser className="w-3 h-3 sm:w-4 sm:h-4" />
                                     <span className="truncate">{assignment.isVirtual ? 'Não atribuído' : assignment.assignedToName}</span>
                                   </div>
-                                  <div className="flex items-center gap-1 bg-secondary-100 px-2 py-0.5 rounded text-xs">
+                                  <div className="flex items-center gap-1 bg-secondary-100 dark:bg-secondary-600 px-2 py-0.5 rounded text-xs">
                                     Peso: {assignment.taskWeight}
                                   </div>
                                   {assignment.isVirtual && (
-                                    <span className="text-gray-500 text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                    <span className="text-gray-500 dark:text-gray-400 text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
                                       {assignment.taskFrequency === 'semanal' ? 'Semanal' : assignment.taskFrequency === 'quinzenal' ? 'Quinzenal' : 'Diária'}
                                     </span>
                                   )}
@@ -282,17 +284,17 @@ export function CalendarPage() {
                             </div>
                             <div className="flex-shrink-0 ml-3">
                               {assignment.completed ? (
-                                <div className="flex items-center gap-1 text-success-600 bg-success-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                                <div className="flex items-center gap-1 text-success-600 dark:text-success-400 bg-success-100 dark:bg-success-900/50 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
                                   <FiCheck className="w-3 h-3 sm:w-4 sm:h-4" />
                                   <span className="hidden sm:inline">Concluída</span>
                                 </div>
                               ) : assignment.isVirtual ? (
-                                <div className="flex items-center gap-1 text-gray-600 bg-gray-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                                <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
                                   <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
                                   <span className="hidden sm:inline">Aguardando</span>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-1 text-warning-600 bg-warning-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                                <div className="flex items-center gap-1 text-warning-600 dark:text-warning-400 bg-warning-100 dark:bg-warning-900/50 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
                                   <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
                                   <span className="hidden sm:inline">Pendente</span>
                                 </div>
@@ -305,7 +307,7 @@ export function CalendarPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-6 sm:py-8 text-secondary-600">
+              <div className="text-center py-6 sm:py-8 text-secondary-600 dark:text-secondary-400">
                 <p className="text-sm sm:text-base">Nenhuma tarefa para este dia</p>
               </div>
             )}
@@ -321,7 +323,7 @@ export function CalendarPage() {
         >
           <div
             ref={modalRef}
-            className="bg-white rounded-lg shadow-xl max-w-sm sm:max-w-md w-full animate-in max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-secondary-800 rounded-lg shadow-xl max-w-sm sm:max-w-md w-full animate-in max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()} // Previne que clicks dentro do modal fechem ele
           >
             {/* Header */}
@@ -338,34 +340,34 @@ export function CalendarPage() {
             {/* Conteúdo */}
             <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
               <div>
-                <label className="text-xs sm:text-sm font-medium text-secondary-600 block mb-1">
+                <label className="text-xs sm:text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">
                   Tarefa
                 </label>
-                <h4 className="text-base sm:text-lg font-semibold text-secondary-900">
+                <h4 className="text-base sm:text-lg font-semibold text-secondary-900 dark:text-secondary-100">
                   {selectedAssignment.taskTitle}
                 </h4>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="text-xs sm:text-sm font-medium text-secondary-600 block mb-1">
+                  <label className="text-xs sm:text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">
                     Responsável
                   </label>
-                  <p className="text-secondary-900 text-sm sm:text-base">{selectedAssignment.assignedToName}</p>
+                  <p className="text-secondary-900 dark:text-secondary-100 text-sm sm:text-base">{selectedAssignment.assignedToName}</p>
                 </div>
                 <div>
-                  <label className="text-xs sm:text-sm font-medium text-secondary-600 block mb-1">
+                  <label className="text-xs sm:text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">
                     Peso
                   </label>
-                  <p className="text-secondary-900 text-sm sm:text-base">{selectedAssignment.taskWeight}</p>
+                  <p className="text-secondary-900 dark:text-secondary-100 text-sm sm:text-base">{selectedAssignment.taskWeight}</p>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-medium text-secondary-600 block mb-1">
+                <label className="text-xs sm:text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">
                   Data
                 </label>
-                <p className="text-secondary-900 text-sm sm:text-base">
+                <p className="text-secondary-900 dark:text-secondary-100 text-sm sm:text-base">
                   {new Date(selectedAssignment.dateKey).toLocaleDateString('pt-BR', {
                     weekday: 'long',
                     year: 'numeric',
@@ -376,7 +378,7 @@ export function CalendarPage() {
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-medium text-secondary-600 block mb-1">
+                <label className="text-xs sm:text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">
                   Status
                 </label>
                 <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium"
@@ -401,10 +403,10 @@ export function CalendarPage() {
 
               {selectedAssignment.completedAt && (
                 <div>
-                  <label className="text-xs sm:text-sm font-medium text-secondary-600 block mb-1">
+                  <label className="text-xs sm:text-sm font-medium text-secondary-600 dark:text-secondary-400 block mb-1">
                     Concluída em
                   </label>
-                  <p className="text-secondary-900 text-sm sm:text-base">
+                  <p className="text-secondary-900 dark:text-secondary-100 text-sm sm:text-base">
                     {new Date(selectedAssignment.completedAt).toLocaleDateString('pt-BR', {
                       weekday: 'short',
                       year: 'numeric',
@@ -419,10 +421,10 @@ export function CalendarPage() {
             </div>
 
             {/* Footer */}
-            <div className="bg-secondary-50 px-4 sm:px-6 py-3 sm:py-4 flex gap-2 sm:gap-3 border-t border-secondary-200">
+            <div className="bg-secondary-50 dark:bg-secondary-700 px-4 sm:px-6 py-3 sm:py-4 flex gap-2 sm:gap-3 border-t border-secondary-200 dark:border-secondary-600">
               <button
                 onClick={closeModal}
-                className="flex-1 px-3 sm:px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 font-medium hover:bg-secondary-50 transition-colors text-sm sm:text-base"
+                className="flex-1 px-3 sm:px-4 py-2 border border-secondary-300 dark:border-secondary-500 rounded-lg text-secondary-700 dark:text-secondary-300 font-medium hover:bg-secondary-50 dark:hover:bg-secondary-600 transition-colors text-sm sm:text-base"
               >
                 Fechar
               </button>

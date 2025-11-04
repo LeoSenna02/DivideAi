@@ -26,7 +26,7 @@ export function Navigation() {
   const goTo = (path: string) => navigate(path);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-neutral-white border-t border-secondary-200 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 bg-neutral-white dark:bg-secondary-900 border-t border-secondary-200 dark:border-secondary-700 shadow-lg">
       <div className="flex justify-around items-center h-16">
         {/** caminhos calculados para checagem precisa */}
         {
@@ -43,7 +43,7 @@ export function Navigation() {
                 <button
                   onClick={() => goTo(homePath)}
                   className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-                    isActive(homePath, true) ? 'text-primary-500' : 'text-secondary-400 hover:text-secondary-600'
+                    isActive(homePath, true) ? 'text-primary-500' : 'text-secondary-400 dark:text-secondary-500 hover:text-secondary-600 dark:hover:text-secondary-400'
                   }`}
                   title="Início"
                 >
@@ -56,7 +56,7 @@ export function Navigation() {
                 <button
                   onClick={() => goTo(calendarPath)}
                   className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-                    isActive(calendarPath) ? 'text-primary-500' : 'text-secondary-400 hover:text-secondary-600'
+                    isActive(calendarPath) ? 'text-primary-500' : 'text-secondary-400 dark:text-secondary-500 hover:text-secondary-600 dark:hover:text-secondary-400'
                   }`}
                   title="Calendário"
                 >
@@ -69,7 +69,7 @@ export function Navigation() {
                 <button
                   onClick={() => goTo(rankingPath)}
                   className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-                    isActive(rankingPath) ? 'text-primary-500' : 'text-secondary-400 hover:text-secondary-600'
+                    isActive(rankingPath) ? 'text-primary-500' : 'text-secondary-400 dark:text-secondary-500 hover:text-secondary-600 dark:hover:text-secondary-400'
                   }`}
                   title="Ranking"
                 >
@@ -84,7 +84,7 @@ export function Navigation() {
                   <button
                     onClick={() => goTo(invitesPath)}
                     className={`flex flex-col items-center justify-center w-full h-full transition-colors relative ${
-                      isActive(invitesPath) ? 'text-primary-500' : 'text-secondary-400 hover:text-secondary-600'
+                      isActive(invitesPath) ? 'text-primary-500' : 'text-secondary-400 dark:text-secondary-500 hover:text-secondary-600 dark:hover:text-secondary-400'
                     }`}
                     title={`Convites Pendentes (${pendingCount})`}
                   >
@@ -103,7 +103,7 @@ export function Navigation() {
                 <button
                   onClick={() => goTo(rewardsPath)}
                   className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-                    isActive(rewardsPath) ? 'text-primary-500' : 'text-secondary-400 hover:text-secondary-600'
+                    isActive(rewardsPath) ? 'text-primary-500' : 'text-secondary-400 dark:text-secondary-500 hover:text-secondary-600 dark:hover:text-secondary-400'
                   }`}
                   title="Relatórios"
                 >
@@ -116,7 +116,7 @@ export function Navigation() {
                 <button
                   onClick={() => goTo(settingsPath)}
                   className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
-                    isActive(settingsPath) ? 'text-primary-500' : 'text-secondary-400 hover:text-secondary-600'
+                    isActive(settingsPath) ? 'text-primary-500' : 'text-secondary-400 dark:text-secondary-500 hover:text-secondary-600 dark:hover:text-secondary-400'
                   }`}
                   title="Ajustes"
                 >

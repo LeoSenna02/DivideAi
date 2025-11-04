@@ -42,18 +42,22 @@ export function SkipTaskModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-warning-50 px-4 sm:px-6 py-4 border-b border-warning-200 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-4 border-b border-secondary-200 dark:border-secondary-700 flex items-center justify-between bg-secondary-50 dark:bg-secondary-800">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-warning-100 rounded-full">
-              <FiAlertCircle className="w-5 h-5 text-warning-600" />
+            <div className="p-2 bg-warning-100 dark:bg-warning-800 rounded-full flex items-center justify-center">
+              <FiAlertCircle className="w-5 h-5 text-warning-700 dark:text-warning-300" />
             </div>
-            <h3 className="text-lg font-bold text-secondary-900">Pular Tarefa</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100 leading-tight">Pular Tarefa</h3>
+              <p className="text-xs text-secondary-600 dark:text-secondary-400">Você pode oferecer a tarefa ou pular com penalidade</p>
+            </div>
           </div>
           <button
             onClick={onCancel}
-            className="text-secondary-600 hover:text-secondary-900 p-1"
+            aria-label="Fechar"
+            className="p-2 rounded-md text-secondary-600 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors"
           >
             <FiX className="w-5 h-5" />
           </button>
@@ -62,9 +66,9 @@ export function SkipTaskModal({
         {/* Conteúdo */}
         <div className="p-4 sm:p-6 space-y-4">
           {/* Detalhes da Tarefa */}
-          <div className="bg-secondary-50 rounded-lg p-4 border border-secondary-200">
-            <h4 className="font-semibold text-secondary-900 mb-2">{assignment.taskTitle}</h4>
-            <div className="space-y-1 text-sm text-secondary-600">
+          <div className="bg-secondary-50 dark:bg-secondary-700 rounded-lg p-4 border border-secondary-200 dark:border-secondary-700">
+            <h4 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-2">{assignment.taskTitle}</h4>
+            <div className="space-y-1 text-sm text-secondary-600 dark:text-secondary-400">
               <p>
                 <span className="font-medium">Peso:</span> {assignment.taskWeight}/5
               </p>
@@ -75,22 +79,26 @@ export function SkipTaskModal({
           </div>
 
           {/* Aviso de Penalidade */}
-          <div className="bg-danger-50 rounded-lg p-4 border border-danger-200">
-            <h5 className="font-semibold text-danger-700 mb-2 flex items-center gap-2">
-              <FiAlertCircle className="w-4 h-4" />
-              Penalidade por Pular
-            </h5>
-            <p className="text-sm text-danger-600">
-              Você perderá <span className="font-bold">{SKIP_PENALTY} pontos</span> por pular esta tarefa.
-            </p>
+          <div className="rounded-lg p-4 border-l-4 border-danger-500 bg-danger-50 dark:bg-danger-900">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 p-2 bg-danger-100 dark:bg-danger-800 rounded-full">
+                <FiAlertCircle className="w-4 h-4 text-danger-700 dark:text-danger-300" />
+              </div>
+              <div>
+                <h5 className="font-semibold text-danger-900 dark:text-danger-400 mb-1">Penalidade por Pular</h5>
+                <p className="text-sm text-danger-900 dark:text-danger-400">
+                  Você perderá <span className="font-bold text-danger-900 dark:text-danger-300">{SKIP_PENALTY} pontos</span> por pular esta tarefa.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Oferta para Outros */}
           <div>
-            <h5 className="font-semibold text-secondary-900 mb-3">
+            <h5 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-3">
               Oferecer para Outros com Bônus
             </h5>
-            <p className="text-sm text-secondary-600 mb-3">
+            <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-3">
               A tarefa será oferecida para os outros membros. Eles ganharão <span className="font-bold">{BONUS_POINTS} pontos extras</span> se aceitarem.
             </p>
 
@@ -99,7 +107,7 @@ export function SkipTaskModal({
                 {otherMembers.map(member => (
                   <div
                     key={member.userId}
-                    className="flex items-center gap-3 p-3 bg-primary-50 rounded-lg border border-primary-200"
+                    className="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-900 rounded-lg border border-primary-200 dark:border-primary-700"
                   >
                     <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                       <span className="text-xs font-bold text-primary-600">
@@ -110,31 +118,31 @@ export function SkipTaskModal({
                           .toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-secondary-900">
+                    <span className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
                       {member.userName}
                     </span>
-                    <FiCheck className="w-4 h-4 text-success-600 ml-auto" />
+                    <FiCheck className="w-4 h-4 text-success-600 dark:text-success-400 ml-auto" />
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-secondary-500 p-3 bg-secondary-50 rounded-lg">
+              <p className="text-sm text-secondary-500 dark:text-secondary-400 p-3 bg-secondary-50 dark:bg-secondary-700 rounded-lg">
                 Nenhum outro membro disponível
               </p>
             )}
           </div>
 
           {/* Informação sobre sorteio */}
-          <div className="bg-info-50 rounded-lg p-3 border border-info-200">
-            <p className="text-xs text-info-700">
+          <div className="bg-info-50 dark:bg-info-900 rounded-lg p-3 border border-info-200 dark:border-info-700">
+            <p className="text-xs text-info-700 dark:text-info-300">
               Se ninguém aceitar até o final do dia, a tarefa voltará ao sorteio para amanhã.
             </p>
           </div>
 
           {/* Mensagem de Erro */}
           {error && (
-            <div className="bg-danger-50 rounded-lg p-3 border border-danger-200">
-              <p className="text-xs text-danger-700">
+            <div className="bg-danger-50 dark:bg-danger-900 rounded-lg p-3 border border-danger-200 dark:border-danger-700">
+              <p className="text-xs text-danger-700 dark:text-danger-300">
                 <span className="font-bold">❌ Erro:</span> {error}
               </p>
             </div>
@@ -142,11 +150,11 @@ export function SkipTaskModal({
         </div>
 
         {/* Footer */}
-        <div className="bg-secondary-50 px-4 sm:px-6 py-4 border-t border-secondary-200 flex gap-3">
+        <div className="bg-secondary-50 dark:bg-secondary-800 px-4 sm:px-6 py-4 border-t border-secondary-200 dark:border-secondary-700 flex gap-3">
           <button
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 font-medium hover:bg-secondary-50 disabled:opacity-50 transition-colors"
+            className="flex-1 px-4 py-2 border border-secondary-300 dark:border-secondary-700 rounded-lg text-secondary-700 dark:text-secondary-200 font-medium hover:bg-secondary-50 dark:hover:bg-secondary-700 disabled:opacity-50 transition-colors"
           >
             Cancelar
           </button>

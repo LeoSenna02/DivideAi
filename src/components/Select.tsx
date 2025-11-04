@@ -135,7 +135,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             `.trim().replace(/\s+/g, ' ')}
             onClick={handleSelectClick}
           >
-            <span className={`${hasSelection ? 'text-secondary-900' : 'text-secondary-400'}`}>
+            <span className={`${hasSelection ? 'text-secondary-900 dark:text-secondary-100' : 'text-secondary-400 dark:text-secondary-500'}`}>
               {displayValue}
             </span>
             <FiChevronDown
@@ -164,13 +164,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         </div>
 
         {error && (
-          <p className="mt-1 text-sm text-danger-600">
+          <p className="mt-1 text-sm text-danger-600 dark:text-danger-400">
             {error}
           </p>
         )}
 
         {helperText && !error && (
-          <p className="mt-1 text-sm text-secondary-500">
+          <p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
             {helperText}
           </p>
         )}

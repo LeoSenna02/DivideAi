@@ -52,12 +52,12 @@ export function HomePage() {
     loadUserHomes();
   }, [user, navigate, logout]);  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-secondary-900">
         <div className="text-center">
           <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-danger-600 mb-2">Erro ao Carregar</h1>
-          <p className="text-secondary-600 mb-6">{error}</p>
-          <p className="text-sm text-secondary-500">Redirecionando para login...</p>
+          <h1 className="text-2xl font-bold text-danger-600 dark:text-danger-400 mb-2">Erro ao Carregar</h1>
+          <p className="text-secondary-600 dark:text-secondary-400 mb-6">{error}</p>
+          <p className="text-sm text-secondary-500 dark:text-secondary-500">Redirecionando para login...</p>
         </div>
       </div>
     );
@@ -65,20 +65,20 @@ export function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-secondary-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="mt-4 text-secondary-600">Carregando seus lares...</p>
+          <p className="mt-4 text-secondary-600 dark:text-secondary-400">Carregando seus lares...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+    <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-secondary-900">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-        <p className="mt-4 text-secondary-600">Redirecionando...</p>
+        <p className="mt-4 text-secondary-600 dark:text-secondary-400">Redirecionando...</p>
       </div>
     </div>
   );

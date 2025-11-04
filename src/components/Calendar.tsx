@@ -148,12 +148,12 @@ export function Calendar({
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+      <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-md p-4 sm:p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-12 bg-gray-200 rounded"></div>
+          <div className="h-12 bg-gray-200 dark:bg-secondary-700 rounded"></div>
           <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {Array.from({ length: 35 }).map((_, i) => (
-              <div key={i} className="h-16 sm:h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-16 sm:h-24 bg-gray-200 dark:bg-secondary-700 rounded"></div>
             ))}
           </div>
         </div>
@@ -162,7 +162,7 @@ export function Calendar({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-md overflow-hidden">
       {/* Header do Calendário */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sm:px-6 py-3 sm:py-4">
         {/* Navegação e título - Mobile: vertical, Desktop: horizontal */}
@@ -240,7 +240,7 @@ export function Calendar({
               {dayNames.map(day => (
                 <div
                   key={day}
-                  className="text-center font-semibold text-secondary-600 py-1 sm:py-2 text-xs sm:text-sm"
+                  className="text-center font-semibold text-secondary-600 dark:text-secondary-400 py-1 sm:py-2 text-xs sm:text-sm"
                 >
                   {day}
                 </div>
@@ -262,12 +262,12 @@ export function Calendar({
                       key={`${weekIndex}-${dateIndex}`}
                       className={`min-h-16 sm:min-h-24 p-1.5 sm:p-2 border rounded-lg transition-all cursor-pointer ${
                         isToday_
-                          ? 'bg-primary-50 border-primary-300 ring-2 ring-primary-200'
+                          ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-300 ring-2 ring-primary-200'
                           : isSelected(date)
-                          ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
+                          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 ring-2 ring-blue-200'
                           : isCurrent
-                          ? 'bg-white border-secondary-200 hover:border-primary-300 hover:bg-primary-50'
-                          : 'bg-gray-50 border-gray-200 opacity-50'
+                          ? 'bg-white dark:bg-secondary-700 border-secondary-200 dark:border-secondary-600 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                          : 'bg-gray-50 dark:bg-secondary-800 border-gray-200 dark:border-secondary-700 opacity-50'
                       }`}
                       onClick={() => {
                         if (isCurrent) {
@@ -279,10 +279,10 @@ export function Calendar({
                       <div
                         className={`text-xs sm:text-sm font-semibold mb-1 ${
                           isToday_
-                            ? 'text-primary-600'
+                            ? 'text-primary-600 dark:text-primary-400'
                             : isCurrent
-                            ? 'text-secondary-700'
-                            : 'text-secondary-400'
+                            ? 'text-secondary-700 dark:text-secondary-300'
+                            : 'text-secondary-400 dark:text-secondary-500'
                         }`}
                       >
                         {date.getDate()}
@@ -391,12 +391,12 @@ export function Calendar({
                 return (
                   <div
                     key={index}
-                    className={`bg-white rounded-lg shadow-sm border p-3 sm:p-4 min-h-32 sm:min-h-40 ${
+                    className={`bg-white dark:bg-secondary-700 rounded-lg shadow-sm border p-3 sm:p-4 min-h-32 sm:min-h-40 ${
                       isToday_
-                        ? 'border-primary-300 ring-2 ring-primary-200 bg-primary-50'
+                        ? 'border-primary-300 ring-2 ring-primary-200 bg-primary-50 dark:bg-primary-900/30'
                         : isSelected(date)
-                        ? 'border-blue-300 ring-2 ring-blue-200 bg-blue-50'
-                        : 'border-secondary-200'
+                        ? 'border-blue-300 ring-2 ring-blue-200 bg-blue-50 dark:bg-blue-900/30'
+                        : 'border-secondary-200 dark:border-secondary-600'
                     }`}
                   >
                     {/* Cabeçalho do dia */}
@@ -404,15 +404,15 @@ export function Calendar({
                       <div className="text-center flex-1">
                         <div className={`text-xs sm:text-sm font-medium ${
                           isToday_
-                            ? 'text-primary-600'
-                            : 'text-secondary-600'
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-secondary-600 dark:text-secondary-400'
                         }`}>
                           {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
                         </div>
                         <div className={`text-lg sm:text-xl font-bold ${
                           isToday_
-                            ? 'text-primary-700'
-                            : 'text-secondary-900'
+                            ? 'text-primary-700 dark:text-primary-300'
+                            : 'text-secondary-900 dark:text-secondary-100'
                         }`}>
                           {date.getDate()}
                         </div>
@@ -436,11 +436,11 @@ export function Calendar({
                         </div>
                         {/* Desktop: Barra de progresso completa */}
                         <div className="hidden sm:block mb-3">
-                          <div className="flex items-center justify-between text-xs text-secondary-600 mb-1">
+                          <div className="flex items-center justify-between text-xs text-secondary-600 dark:text-secondary-400 mb-1">
                             <span>{completed}/{total} tarefas</span>
                             <span>{Math.round((completed / total) * 100)}%</span>
                           </div>
-                          <div className="w-full bg-secondary-200 rounded-full h-2">
+                          <div className="w-full bg-secondary-200 dark:bg-secondary-600 rounded-full h-2">
                             <div
                               className="bg-success-500 h-2 rounded-full transition-all"
                               style={{ width: `${(completed / total) * 100}%` }}
@@ -470,7 +470,7 @@ export function Calendar({
                         </div>
                       ))}
                       {dayAssignments.length === 0 && (
-                        <div className="text-xs text-secondary-400 text-center py-2">
+                        <div className="text-xs text-secondary-400 dark:text-secondary-500 text-center py-2">
                           Sem tarefas
                         </div>
                       )}

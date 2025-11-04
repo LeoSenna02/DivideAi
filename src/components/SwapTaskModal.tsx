@@ -110,14 +110,14 @@ export function SwapTaskModal({
           <button
             onClick={handleClose}
             disabled={loading}
-            className="flex-1 bg-secondary-100 hover:bg-secondary-200 disabled:bg-secondary-100 text-secondary-700 disabled:text-secondary-400 font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+            className="flex-1 bg-secondary-100 dark:bg-secondary-800 hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:bg-secondary-100 dark:disabled:bg-secondary-800 text-secondary-700 dark:text-secondary-200 disabled:text-secondary-400 dark:disabled:text-secondary-500 font-medium py-2 px-3 rounded-lg transition-colors text-sm"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
             disabled={loading || !selectedMember || !selectedMemberAssignment}
-            className="flex-1 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+            className="flex-1 bg-primary-500 dark:bg-primary-600 hover:bg-primary-600 dark:hover:bg-primary-700 disabled:bg-primary-300 dark:disabled:bg-primary-400 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center text-sm"
           >
             {loading ? (
               <>
@@ -126,9 +126,6 @@ export function SwapTaskModal({
               </>
             ) : (
               <>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7l4-4m0 0l4 4m-4-4v10m0 0H4m4 0h8" />
-                </svg>
                 Propor Troca
               </>
             )}
@@ -139,10 +136,10 @@ export function SwapTaskModal({
       <div className="space-y-4">
         {/* Tarefa a oferecer */}
         {myAssignment && (
-          <div className="bg-primary-50 p-3 rounded-lg border border-primary-200">
-            <p className="text-xs text-secondary-600 font-medium mb-1">Você oferece:</p>
-            <p className="font-medium text-secondary-900">{myAssignment.taskTitle}</p>
-            <p className="text-xs text-secondary-500">Peso: {myAssignment.taskWeight}/5</p>
+          <div className="bg-primary-50 dark:bg-primary-900 p-3 rounded-lg border border-primary-200 dark:border-primary-700">
+            <p className="text-xs text-secondary-600 dark:text-secondary-400 font-medium mb-1">Você oferece:</p>
+            <p className="font-medium text-secondary-900 dark:text-secondary-100">{myAssignment.taskTitle}</p>
+            <p className="text-xs text-secondary-500 dark:text-secondary-400">Peso: {myAssignment.taskWeight}/5</p>
           </div>
         )}
 
@@ -177,7 +174,7 @@ export function SwapTaskModal({
               fullWidth
             />
             {getMemberAssignments().length === 0 && (
-              <p className="text-xs text-secondary-500 mt-2">Este membro não tem tarefas disponíveis para hoje.</p>
+              <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-2">Este membro não tem tarefas disponíveis para hoje.</p>
             )}
           </div>
         )}
@@ -192,13 +189,13 @@ export function SwapTaskModal({
             maxLength={200}
             className="input w-full resize-none h-20"
           />
-          <p className="text-xs text-secondary-500 mt-1">{message.length}/200 caracteres</p>
+          <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">{message.length}/200 caracteres</p>
         </div>
 
         {/* Erro */}
         {error && (
-          <div className="p-3 bg-danger-50 border border-danger-200 rounded-lg">
-            <p className="text-xs text-danger-700">{error}</p>
+          <div className="p-3 bg-danger-50 dark:bg-danger-900 border border-danger-200 dark:border-danger-700 rounded-lg">
+            <p className="text-xs text-danger-700 dark:text-danger-300">{error}</p>
           </div>
         )}
       </div>

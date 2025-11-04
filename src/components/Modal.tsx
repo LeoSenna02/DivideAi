@@ -61,7 +61,7 @@ export function Modal({
     >
       <div
         ref={modalRef}
-        className={`bg-white rounded-xl shadow-xl ${maxWidth} w-full animate-in`}
+        className={`bg-white dark:bg-secondary-800 rounded-xl shadow-xl ${maxWidth} w-full animate-in`}
         onClick={(e) => e.stopPropagation()} // Previne que clicks dentro do modal fechem ele
       >
         {/* Header */}
@@ -83,7 +83,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="bg-secondary-50 px-6 py-4 border-t border-secondary-200 flex gap-3 rounded-b-xl">
+          <div className="bg-secondary-50 dark:bg-secondary-800 px-6 py-4 border-t border-secondary-200 dark:border-secondary-700 flex gap-3 rounded-b-xl">
             {footer}
           </div>
         )}

@@ -9,7 +9,7 @@
   font-weight: 400;
 
   color-scheme: light;
-  /* Cores do novo design system */
+  /* Cores do novo design system - Modo Claro */
   color: #374151; /* secondary-700 */
   background-color: #ffffff; /* neutral-white */
 
@@ -17,6 +17,13 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tema Escuro */
+:root.dark {
+  color-scheme: dark;
+  color: #e5e7eb; /* secondary-200 */
+  background-color: #111827; /* secondary-900 */
 }
 
 /* Estilos globais */
@@ -28,6 +35,10 @@ body {
   margin: 0;
   min-height: 100vh;
   background-color: #f9fafb; /* secondary-50 */
+}
+
+body.dark {
+  background-color: #111827; /* secondary-900 */
 }
 
 /* Componentes customizados — Design System */
@@ -53,9 +64,39 @@ body {
     @apply bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 focus:ring-danger-300;
   }
 
+  /* Dark mode button styles */
+  .dark .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-500 active:bg-primary-700;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-secondary-700 text-secondary-200 hover:bg-secondary-600 active:bg-secondary-700;
+  }
+
+  .dark .btn-success {
+    @apply bg-success-600 hover:bg-success-500;
+  }
+
+  .dark .btn-danger {
+    @apply bg-danger-600 hover:bg-danger-500;
+  }
+
+  /* Labels */
+  .label {
+    @apply block text-sm font-medium text-secondary-700 mb-2;
+  }
+
+  .dark .label {
+    @apply text-secondary-300;
+  }
+
   /* Cards */
   .card {
     @apply bg-secondary-50 rounded-lg shadow-sm border border-secondary-200 p-6;
+  }
+
+  .dark .card {
+    @apply bg-secondary-800 border-secondary-700;
   }
 
   /* Inputs */
@@ -63,9 +104,17 @@ body {
     @apply w-full px-3 py-2 border border-secondary-300 rounded-md text-secondary-900 placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors;
   }
 
+  .dark .input {
+    @apply bg-secondary-700 text-secondary-50 placeholder-secondary-400 border-secondary-600 focus:ring-primary-400;
+  }
+
   /* Select */
   .select {
     @apply relative w-full px-3 py-2 text-sm border border-secondary-300 rounded-lg bg-white text-secondary-900 placeholder-secondary-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-secondary-50 disabled:text-secondary-400 disabled:cursor-not-allowed appearance-none;
+  }
+
+  .dark .select {
+    @apply bg-secondary-700 text-secondary-50 border-secondary-600 placeholder-secondary-400 disabled:bg-secondary-800 disabled:text-secondary-500;
   }
 
   .select-sm {
@@ -76,7 +125,7 @@ body {
     @apply px-4 py-3 text-base;
   }
 
-  /* Custom select dropdown styling */
+  /* Custom select styling */
   .select {
     background-image: none;
   }
@@ -87,6 +136,10 @@ body {
 
   .select:focus + .select-arrow {
     color: #6366f1;
+  }
+
+  .dark .select:focus + .select-arrow {
+    color: #818cf8;
   }
 
   /* Custom dropdown arrow */
@@ -126,6 +179,14 @@ body {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236366f1' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   }
 
+  .dark .select:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23818cf8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  }
+
+  .dark .select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%9ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  }
+
   /* Custom dropdown appearance for webkit browsers */
   .select::-webkit-scrollbar {
     width: 8px;
@@ -158,9 +219,25 @@ body {
     @apply outline-none ring-2 ring-primary-500 border-primary-500;
   }
 
+  .dark .select-custom {
+    @apply bg-secondary-700 text-secondary-50 border-secondary-600;
+  }
+
+  .dark .select-custom:hover {
+    @apply border-secondary-500;
+  }
+
+  .dark .select-custom:focus {
+    @apply ring-primary-400 border-primary-400;
+  }
+
   /* Custom dropdown */
   .select-dropdown {
     @apply absolute top-full left-0 right-0 mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto;
+  }
+
+  .dark .select-dropdown {
+    @apply bg-secondary-800 border-secondary-700;
   }
 
   /* Custom options */
@@ -180,6 +257,18 @@ body {
     @apply bg-primary-100 text-primary-700 font-medium;
   }
 
+  .dark .select-option-enabled {
+    @apply text-secondary-50 hover:bg-secondary-700;
+  }
+
+  .dark .select-option-disabled {
+    @apply text-secondary-500 bg-secondary-900;
+  }
+
+  .dark .select-option-selected {
+    @apply bg-primary-900 text-primary-300;
+  }
+
   /* Scrollbar styling for dropdown */
   .select-dropdown::-webkit-scrollbar {
     width: 6px;
@@ -195,6 +284,21 @@ body {
 
   .select-dropdown::-webkit-scrollbar-thumb:hover {
     @apply bg-secondary-400;
+  }
+}
+
+/* Estilos dark mode para scrollbars dos custom selects */
+@layer components {
+  .dark .select-dropdown::-webkit-scrollbar-track {
+    @apply bg-secondary-700 rounded;
+  }
+
+  .dark .select-dropdown::-webkit-scrollbar-thumb {
+    @apply bg-secondary-600 rounded;
+  }
+
+  .dark .select-dropdown::-webkit-scrollbar-thumb:hover {
+    @apply bg-secondary-500;
   }
 }
 
@@ -223,6 +327,10 @@ body {
     scrollbar-color: rgb(156 163 175) rgb(229 231 235);
   }
 
+  .dark .scroll-elegant {
+    scrollbar-color: rgb(75 85 99) rgb(31 41 55);
+  }
+
   .scroll-elegant::-webkit-scrollbar {
     width: 6px;
   }
@@ -231,16 +339,32 @@ body {
     @apply bg-secondary-100 rounded-full;
   }
 
+  .dark .scroll-elegant::-webkit-scrollbar-track {
+    @apply bg-secondary-800 rounded-full;
+  }
+
   .scroll-elegant::-webkit-scrollbar-thumb {
     @apply bg-secondary-300 rounded-full;
+  }
+
+  .dark .scroll-elegant::-webkit-scrollbar-thumb {
+    @apply bg-secondary-600 rounded-full;
   }
 
   .scroll-elegant::-webkit-scrollbar-thumb:hover {
     @apply bg-secondary-400;
   }
 
+  .dark .scroll-elegant::-webkit-scrollbar-thumb:hover {
+    @apply bg-secondary-500;
+  }
+
   .scroll-elegant::-webkit-scrollbar-corner {
     @apply bg-secondary-100;
+  }
+
+  .dark .scroll-elegant::-webkit-scrollbar-corner {
+    @apply bg-secondary-800;
   }
 }
 

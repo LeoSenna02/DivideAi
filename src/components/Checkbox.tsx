@@ -45,7 +45,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
                 ${
                   props.checked
                     ? 'bg-primary-500 border-primary-500 text-white shadow-sm'
-                    : 'bg-neutral-white border-secondary-300 group-hover:border-primary-400'
+                    : 'bg-neutral-white dark:bg-secondary-800 border-secondary-300 dark:border-secondary-700 group-hover:border-primary-400 dark:group-hover:border-primary-500'
                 }
                 ${
                   props.disabled
@@ -67,16 +67,16 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           </div>
 
           {/* Label opcional */}
-          {label && (
+            {label && (
             <span
               className={`
                 select-none transition-colors duration-200
                 ${
                   props.disabled
-                    ? 'text-secondary-400 cursor-not-allowed'
+                    ? 'text-secondary-400 cursor-not-allowed dark:text-secondary-500'
                     : props.checked
-                      ? 'text-secondary-900'
-                      : 'text-secondary-700 group-hover:text-secondary-900'
+                      ? 'text-secondary-900 dark:text-secondary-100'
+                      : 'text-secondary-700 group-hover:text-secondary-900 dark:text-secondary-200 dark:group-hover:text-secondary-100'
                 }
                 ${size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-lg' : 'text-base'}
               `}
@@ -88,12 +88,12 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
 
         {/* Texto auxiliar */}
         {helperText && !error && (
-          <p className="mt-1 text-sm text-secondary-500 ml-8">{helperText}</p>
+          <p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400 ml-8">{helperText}</p>
         )}
 
         {/* Mensagem de erro */}
         {error && (
-          <p className="mt-1 text-sm text-danger-600 ml-8">{error}</p>
+          <p className="mt-1 text-sm text-danger-600 dark:text-danger-400 ml-8">{error}</p>
         )}
       </div>
     );
@@ -144,7 +144,7 @@ export const TaskCheckbox = ({ checked, onChange, disabled = false, size = 'md' 
           ${
             checked
               ? 'bg-success-500 border-success-500 text-white shadow-sm'
-              : 'bg-neutral-white border-secondary-300 hover:border-success-400 hover:shadow-sm'
+              : 'bg-neutral-white dark:bg-secondary-800 border-secondary-300 dark:border-secondary-700 hover:border-success-400 dark:hover:border-success-400 hover:shadow-sm'
           }
           ${
             disabled

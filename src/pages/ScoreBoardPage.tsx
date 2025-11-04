@@ -124,9 +124,9 @@ export function ScoreBoardPage() {
   }, [homeId, user]);
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.8) return 'text-success-600 bg-success-50';
-    if (score >= 0.6) return 'text-warning-600 bg-warning-50';
-    return 'text-danger-600 bg-danger-50';
+    if (score >= 0.8) return 'text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-900/20';
+    if (score >= 0.6) return 'text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-900/20';
+    return 'text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20';
   };
 
   const getScoreLabel = (score: number) => {
@@ -139,10 +139,10 @@ export function ScoreBoardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="mt-4 text-secondary-600">Carregando placar...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 dark:border-primary-400 mx-auto"></div>
+          <p className="mt-4 text-secondary-600 dark:text-gray-300">Carregando placar...</p>
         </div>
       </div>
     );
@@ -150,9 +150,9 @@ export function ScoreBoardPage() {
 
   if (!home) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-gray-900">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-secondary-900 mb-4">Lar não encontrado</h2>
+          <h2 className="text-2xl font-bold text-secondary-900 dark:text-white mb-4">Lar não encontrado</h2>
           <button
             onClick={() => navigate('/')}
             className="btn btn-primary"
@@ -165,23 +165,23 @@ export function ScoreBoardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-secondary-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-neutral-white shadow-sm border-b border-secondary-200">
+      <header className="bg-neutral-white dark:bg-gray-800 shadow-sm border-b border-secondary-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate(`/home/${homeId}`)}
-                className="text-secondary-500 hover:text-secondary-700 transition-colors"
+                className="text-secondary-500 dark:text-gray-400 hover:text-secondary-700 dark:hover:text-gray-200 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-secondary-900">Placar de Justiça</h1>
-                <p className="text-sm text-secondary-600">{home.name}</p>
+                <h1 className="text-2xl font-bold text-secondary-900 dark:text-white">Placar de Justiça</h1>
+                <p className="text-sm text-secondary-600 dark:text-gray-300">{home.name}</p>
               </div>
             </div>
             <button
@@ -197,37 +197,37 @@ export function ScoreBoardPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-secondary-900 mb-2">Distribuição de Tarefas</h2>
-          <p className="text-secondary-600">
+          <h2 className="text-3xl font-bold text-secondary-900 dark:text-white mb-2">Distribuição de Tarefas</h2>
+          <p className="text-secondary-600 dark:text-gray-300">
             Acompanhe como as tarefas estão sendo distribuídas entre os membros do lar
           </p>
         </div>
 
         {/* Estatísticas Gerais */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card text-center bg-neutral-white border border-secondary-200">
-            <div className="text-3xl font-bold text-primary-600 mb-2">
+          <div className="card text-center bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-700">
+            <div className="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-2">
               {tasks.filter(t => t.completed).length}
             </div>
-            <p className="text-secondary-600">Tarefas Concluídas</p>
+            <p className="text-secondary-600 dark:text-gray-300">Tarefas Concluídas</p>
           </div>
-          <div className="card text-center bg-neutral-white border border-secondary-200">
-            <div className="text-3xl font-bold text-warning-600 mb-2">
+          <div className="card text-center bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-700">
+            <div className="text-3xl font-bold text-warning-600 dark:text-warning-400 mb-2">
               {tasks.filter(t => !t.completed).length}
             </div>
-            <p className="text-secondary-600">Tarefas Pendentes</p>
+            <p className="text-secondary-600 dark:text-gray-300">Tarefas Pendentes</p>
           </div>
-          <div className="card text-center bg-neutral-white border border-secondary-200">
-            <div className="text-3xl font-bold text-success-600 mb-2">
+          <div className="card text-center bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-700">
+            <div className="text-3xl font-bold text-success-600 dark:text-success-400 mb-2">
               {tasks.reduce((sum, t) => sum + t.weight, 0)}
             </div>
-            <p className="text-secondary-600">Pontos Totais</p>
+            <p className="text-secondary-600 dark:text-gray-300">Pontos Totais</p>
           </div>
         </div>
 
         {/* Ranking de Justiça */}
-        <div className="card bg-neutral-white border border-secondary-200">
-          <h3 className="text-xl font-semibold text-secondary-900 mb-6">Ranking de Justiça</h3>
+        <div className="card bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-700">
+          <h3 className="text-xl font-semibold text-secondary-900 dark:text-white mb-6">Ranking de Justiça</h3>
 
           <div className="space-y-4">
             {sortedScores.map((score, index) => {
@@ -241,35 +241,35 @@ export function ScoreBoardPage() {
                 <div
                   key={score.userId}
                   className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                    score.userId === user?.id ? 'border-primary-300 bg-primary-50' : 'border-secondary-200 bg-neutral-white'
+                    score.userId === user?.id ? 'border-primary-300 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20' : 'border-secondary-200 dark:border-gray-600 bg-neutral-white dark:bg-gray-700'
                   }`}
                 >
                   <div className="flex items-center space-x-4">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      index === 0 ? 'bg-success-100 text-success-700' :
-                      index === 1 ? 'bg-primary-100 text-primary-700' :
-                      index === 2 ? 'bg-warning-100 text-warning-700' :
-                      'bg-secondary-100 text-secondary-700'
+                      index === 0 ? 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300' :
+                      index === 1 ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' :
+                      index === 2 ? 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300' :
+                      'bg-secondary-100 dark:bg-gray-600 text-secondary-700 dark:text-gray-300'
                     }`}>
                       {index + 1}
                     </div>
 
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-primary-600 font-medium">
+                    <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                      <span className="text-primary-600 dark:text-primary-400 font-medium">
                         {member.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
 
                     <div>
-                      <h4 className="font-medium text-secondary-900">
+                      <h4 className="font-medium text-secondary-900 dark:text-white">
                         {member.name}
                         {score.userId === user?.id && (
-                          <span className="ml-2 text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded">
+                          <span className="ml-2 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-1 rounded">
                             Você
                           </span>
                         )}
                       </h4>
-                      <p className="text-sm text-secondary-500">
+                      <p className="text-sm text-secondary-500 dark:text-gray-400">
                         {completedTasks.length} de {memberTasks.length} tarefas concluídas
                       </p>
                     </div>
@@ -279,7 +279,7 @@ export function ScoreBoardPage() {
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(score.score)}`}>
                       {getScoreLabel(score.score)}
                     </div>
-                    <div className="text-sm text-secondary-500 mt-1">
+                    <div className="text-sm text-secondary-500 dark:text-gray-400 mt-1">
                       {score.totalWeight} pontos
                     </div>
                   </div>
@@ -290,25 +290,25 @@ export function ScoreBoardPage() {
         </div>
 
         {/* Legenda */}
-        <div className="mt-8 card bg-neutral-white border border-secondary-200">
-          <h4 className="font-semibold text-secondary-900 mb-4">Como funciona o placar?</h4>
+        <div className="mt-8 card bg-neutral-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-700">
+          <h4 className="font-semibold text-secondary-900 dark:text-white mb-4">Como funciona o placar?</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="flex items-start space-x-2">
               <div className="w-4 h-4 bg-success-500 rounded mt-0.5"></div>
               <div>
-                <strong className="text-success-700">Justo:</strong> Contribuiu proporcionalmente com as tarefas
+                <strong className="text-success-700 dark:text-success-300">Justo:</strong> Contribuiu proporcionalmente com as tarefas
               </div>
             </div>
             <div className="flex items-start space-x-2">
               <div className="w-4 h-4 bg-warning-500 rounded mt-0.5"></div>
               <div>
-                <strong className="text-warning-700">Equilibrado:</strong> Contribuição adequada, mas pode melhorar
+                <strong className="text-warning-700 dark:text-warning-300">Equilibrado:</strong> Contribuição adequada, mas pode melhorar
               </div>
             </div>
             <div className="flex items-start space-x-2">
               <div className="w-4 h-4 bg-danger-500 rounded mt-0.5"></div>
               <div>
-                <strong className="text-danger-700">Precisa Compensar:</strong> Deve contribuir mais com as tarefas
+                <strong className="text-danger-700 dark:text-danger-300">Precisa Compensar:</strong> Deve contribuir mais com as tarefas
               </div>
             </div>
           </div>

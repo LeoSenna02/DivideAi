@@ -85,7 +85,6 @@ export function TasksPage() {
     const q = query(
       swapRequestsRef,
       where('homeId', '==', homeId),
-      where('requestedToUserId', '==', user.id),
       where('status', '==', 'pending')
     );
 
@@ -257,10 +256,10 @@ export function TasksPage() {
 
   if (loading || loadingMembers) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-secondary-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="mt-4 text-secondary-600">Carregando tarefas...</p>
+          <p className="mt-4 text-secondary-600 dark:text-secondary-400">Carregando tarefas...</p>
         </div>
       </div>
     );
@@ -268,11 +267,11 @@ export function TasksPage() {
 
   if (accessDenied) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-secondary-900">
         <div className="text-center">
           <div className="text-6xl mb-4">🚫</div>
-          <h1 className="text-2xl font-bold text-danger-600 mb-2">Acesso Negado</h1>
-          <p className="text-secondary-600 mb-6">Você não tem permissão para acessar este lar.</p>
+          <h1 className="text-2xl font-bold text-danger-600 dark:text-danger-400 mb-2">Acesso Negado</h1>
+          <p className="text-secondary-600 dark:text-secondary-400 mb-6">Você não tem permissão para acessar este lar.</p>
           <button
             onClick={() => navigate('/', { replace: true })}
             className="btn btn-primary"
@@ -289,15 +288,15 @@ export function TasksPage() {
   const showFab = location.pathname === homePath || location.pathname === `${homePath}/`;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 pb-24">
       {/* Header */}
-      <header className="bg-neutral-white shadow-sm border-b border-secondary-200 sticky top-0 z-10">
+      <header className="bg-neutral-white dark:bg-secondary-800 shadow-sm border-b border-secondary-200 dark:border-secondary-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-secondary-900">Tarefas de Hoje</h1>
-                <p className="text-sm text-secondary-600 mt-1 capitalize">{getTodayDate()}</p>
+                <h1 className="text-2xl font-bold text-secondary-900 dark:text-secondary-100">Tarefas de Hoje</h1>
+                <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1 capitalize">{getTodayDate()}</p>
               </div>
               <svg className="w-6 h-6 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
