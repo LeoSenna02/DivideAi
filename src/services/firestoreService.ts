@@ -12,10 +12,81 @@ import {
   Timestamp,
   addDoc,
   writeBatch,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Task, JusticeScore, HomeMember, MemberInvite, MonthlyScore, DailyAssignment } from '../types';
+import type { Task, JusticeScore, HomeMember, MemberInvite, MonthlyScore, DailyAssignment, TaskSwapRequest } from '../types';
 import { getMonthKey, getDateKey } from './distributionService';
+
+// ============ LARES (HOMES) ============
+
+/**
+ * Cria um novo lar
+ */
+export const createHome = async (
+  userId: string,
+  userName: string,
+  homeName: string,
+  description?: string
+): Promise<string> => {
+  try {
+    if (!userId || !homeName) {
+      throw new Error('Dados inválidos para criar lar');
+    }
+
+    // Criar documento do lar
+    const homesRef = collection(db, 'homes');
+    const homeDoc = await addDoc(homesRef, {
+      name: homeName,
+      description: description || '',
+      ownerId: userId,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+
+    const homeId = homeDoc.id;
+
+    // Adicionar criador como admin do lar
+    const membersRef = collection(db, 'homeMembers');
+    await addDoc(membersRef, {
+      userId,
+      homeId,
+      role: 'admin',
+      joinedAt: Timestamp.now(),
+      invitedBy: null,
+      userName: userName || 'Usuário',
+    });
+
+    return homeId;
+  } catch (error) {
+    throw new Error(`Erro ao criar lar: ${error instanceof Error ? error.message : 'Desconhecido'}`);
+  }
+};
+
+/**
+ * Busca todos os lares do qual o usuário é membro
+ */
+export const getUserHomes = async (userId: string): Promise<Array<{ homeId: string; role: string }>> => {
+  try {
+    if (!userId) {
+      throw new Error('ID do usuário inválido');
+    }
+
+    const membersRef = collection(db, 'homeMembers');
+    const q = query(membersRef, where('userId', '==', userId));
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        homeId: data.homeId,
+        role: data.role || 'member',
+      };
+    });
+  } catch (error) {
+    throw new Error(`Erro ao buscar lares do usuário: ${error instanceof Error ? error.message : 'Desconhecido'}`);
+  }
+};
 
 // ============ TAREFAS ============
 
@@ -185,6 +256,8 @@ export const getHomeMembers = async (homeId: string): Promise<HomeMember[]> => {
           joinedAt: data.joinedAt?.toDate?.() || new Date(),
           invitedBy: data.invitedBy,
           userName: data.userName || 'Usuário',
+          isOnVacation: data.isOnVacation || false,
+          vacationEndDate: data.vacationEndDate?.toDate?.(),
         });
       }
     });
@@ -490,9 +563,9 @@ export const updateMonthlyScore = async (
       const docRef = snapshot.docs[0].ref;
       const currentData = snapshot.docs[0].data();
       await updateDoc(docRef, {
-        score,
+        score: (currentData.score || 0) + score,
         tasksAssigned: (currentData.tasksAssigned || 0) + 1,
-        totalWeight: score,
+        totalWeight: (currentData.totalWeight || 0) + score,
         lastUpdated: Timestamp.now(),
       });
     } else {
@@ -563,6 +636,12 @@ export const getDailyAssignments = async (
         dateKey: data.dateKey,
         completed: data.completed || false,
         completedAt: data.completedAt?.toDate?.(),
+        skipped: data.skipped || false,
+        skippedAt: data.skippedAt?.toDate?.(),
+        skippedBy: data.skippedBy,
+        swapped: data.swapped || false,
+        swappedAt: data.swappedAt?.toDate?.(),
+        swappedWith: data.swappedWith,
         createdAt: data.createdAt?.toDate?.() || new Date(),
       };
     });
@@ -593,6 +672,12 @@ export const getAllAssignments = async (homeId: string): Promise<DailyAssignment
         dateKey: data.dateKey,
         completed: data.completed || false,
         completedAt: data.completedAt?.toDate?.(),
+        skipped: data.skipped || false,
+        skippedAt: data.skippedAt?.toDate?.(),
+        skippedBy: data.skippedBy,
+        swapped: data.swapped || false,
+        swappedAt: data.swappedAt?.toDate?.(),
+        swappedWith: data.swappedWith,
         createdAt: data.createdAt?.toDate?.() || new Date(),
       };
     });
@@ -658,7 +743,8 @@ export const completeAssignment = async (assignmentId: string): Promise<void> =>
 
 export const updateMonthlyScoresFromAssignments = async (
   homeId: string,
-  updatedScores: Map<string, number>
+  updatedScores: Map<string, number>,
+  assignedTasksCount: Map<string, number>
 ): Promise<void> => {
   try {
     const batch = writeBatch(db);
@@ -674,11 +760,16 @@ export const updateMonthlyScoresFromAssignments = async (
       );
       const snapshot = await getDocs(q);
 
+      const tasksCount = assignedTasksCount.get(userId) || 0;
+
       if (snapshot.docs.length > 0) {
         // Atualizar existente
         const docRef = snapshot.docs[0].ref;
+        const currentData = snapshot.docs[0].data();
         batch.update(docRef, {
           score,
+          tasksAssigned: (currentData.tasksAssigned || 0) + tasksCount,
+          totalWeight: score,
           lastUpdated: Timestamp.now(),
         });
       } else {
@@ -689,7 +780,7 @@ export const updateMonthlyScoresFromAssignments = async (
           userId,
           monthKey: currentMonth,
           score,
-          tasksAssigned: 0,
+          tasksAssigned: tasksCount,
           totalWeight: score,
           lastUpdated: Timestamp.now(),
         });
@@ -749,11 +840,15 @@ export const skipAssignment = async (
     const scoreDocs = await getDocs(scoreQuery);
     if (scoreDocs.docs.length > 0) {
       const scoreDoc = scoreDocs.docs[0];
-      const currentScore = scoreDoc.data().score || 0;
+      const currentData = scoreDoc.data();
+      const currentScore = currentData.score || 0;
+      const currentTotalWeight = currentData.totalWeight || 0;
       const newScore = Math.max(0, currentScore - SKIP_PENALTY);
+      const newTotalWeight = Math.max(0, currentTotalWeight - assignment.taskWeight);
       
       batch.update(scoreDoc.ref, {
         score: newScore,
+        totalWeight: newTotalWeight,
         lastUpdated: Timestamp.now(),
       });
     } else {
@@ -765,7 +860,7 @@ export const skipAssignment = async (
         monthKey,
         score: Math.max(0, -SKIP_PENALTY),
         tasksAssigned: 0,
-        totalWeight: 0,
+        totalWeight: Math.max(0, -assignment.taskWeight),
         lastUpdated: Timestamp.now(),
       });
     }
@@ -840,6 +935,11 @@ export const acceptOfferedTask = async (
 
     const offeredTask = offeredTaskDoc.data();
 
+    // Verificar se o usuário que pulou originalmente não pode aceitar sua própria tarefa
+    if (offeredTask.originalUserId === userId) {
+      throw new Error('Você não pode aceitar sua própria tarefa oferecida');
+    }
+
     batch.update(offeredTaskRef, {
       status: 'accepted',
       respondedAt: Timestamp.now(),
@@ -904,25 +1004,200 @@ export const declineOfferedTask = async (offeredTaskId: string): Promise<void> =
 };
 
 /**
- * Busca tarefas oferecidas para um usuário
+ * Define o status de férias de um membro
  */
-export const getOfferedTasksForUser = async (userId: string, homeId: string): Promise<any[]> => {
+export const setMemberVacationStatus = async (
+  homeId: string,
+  userId: string,
+  isOnVacation: boolean,
+  vacationEndDate?: Date
+): Promise<void> => {
   try {
-    const offeredTasksRef = collection(db, 'offeredTasks');
+    const membersRef = collection(db, 'homeMembers');
     const q = query(
-      offeredTasksRef,
-      where('offeredToId', '==', userId),
+      membersRef,
       where('homeId', '==', homeId),
-      where('status', '==', 'pending')
+      where('userId', '==', userId)
     );
-
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+
+    if (snapshot.docs.length === 0) {
+      throw new Error('Membro não encontrado');
+    }
+
+    const memberDoc = snapshot.docs[0].ref;
+    await updateDoc(memberDoc, {
+      isOnVacation,
+      vacationEndDate: vacationEndDate ? Timestamp.fromDate(vacationEndDate) : null,
+    });
   } catch (error) {
-    throw new Error(`Erro ao buscar tarefas oferecidas: ${error instanceof Error ? error.message : 'Desconhecido'}`);
+    throw new Error(`Erro ao atualizar status de férias: ${error instanceof Error ? error.message : 'Desconhecido'}`);
   }
 };
 
+// ============ TROCA DE TAREFAS ============
+
+/**
+ * Cria um pedido de troca de tarefa
+ */
+export const createTaskSwapRequest = async (
+  swapRequest: TaskSwapRequest
+): Promise<string> => {
+  try {
+    // Validar que nenhuma das tarefas está pulada
+    const offeredAssignmentRef = doc(db, 'dailyAssignments', swapRequest.offeredAssignmentId);
+    const requestedAssignmentRef = doc(db, 'dailyAssignments', swapRequest.requestedAssignmentId);
+    
+    const [offeredSnap, requestedSnap] = await Promise.all([
+      getDoc(offeredAssignmentRef),
+      getDoc(requestedAssignmentRef)
+    ]);
+    
+    if (!offeredSnap.exists() || !requestedSnap.exists()) {
+      throw new Error('Uma ou ambas as tarefas não foram encontradas');
+    }
+    
+    const offeredAssignment = offeredSnap.data() as DailyAssignment;
+    const requestedAssignment = requestedSnap.data() as DailyAssignment;
+    
+    if (offeredAssignment.skipped) {
+      throw new Error('Não é possível propor troca com uma tarefa pulada');
+    }
+    
+    if (requestedAssignment.skipped) {
+      throw new Error('Não é possível propor troca para uma tarefa pulada');
+    }
+
+    const swapRequestsRef = collection(db, 'taskSwapRequests');
+    const newDoc = await addDoc(swapRequestsRef, {
+      ...swapRequest,
+      createdAt: Timestamp.now(),
+    });
+    return newDoc.id;
+  } catch (error) {
+    throw new Error(`Erro ao criar pedido de troca: ${error instanceof Error ? error.message : 'Desconhecido'}`);
+  }
+};
+
+/**
+ * Obtém todos os pedidos de troca pendentes para um usuário
+ */
+export const getTaskSwapRequestsForUser = async (
+  userId: string,
+  homeId: string
+): Promise<TaskSwapRequest[]> => {
+  try {
+    const swapRequestsRef = collection(db, 'taskSwapRequests');
+    const q = query(
+      swapRequestsRef,
+      where('homeId', '==', homeId),
+      where('requestedToUserId', '==', userId),
+      where('status', '==', 'pending')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id,
+      createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+      respondedAt: doc.data().respondedAt?.toDate?.() || undefined,
+    })) as TaskSwapRequest[];
+  } catch (error) {
+    throw new Error(`Erro ao buscar pedidos de troca: ${error instanceof Error ? error.message : 'Desconhecido'}`);
+  }
+};
+
+/**
+ * Aceita um pedido de troca de tarefa
+ */
+export const acceptTaskSwapRequest = async (
+  swapRequestId: string,
+  userId: string
+): Promise<void> => {
+  try {
+    const swapRequestRef = doc(db, 'taskSwapRequests', swapRequestId);
+    
+    // Primeiro, buscar os dados da solicitação
+    const swapRequestSnap = await getDoc(swapRequestRef);
+    if (!swapRequestSnap.exists()) {
+      throw new Error('Solicitação de troca não encontrada');
+    }
+    
+    const swapRequest = swapRequestSnap.data() as TaskSwapRequest;
+    
+    // Verificar se o usuário é o destinatário correto
+    if (swapRequest.requestedToUserId !== userId) {
+      throw new Error('Você não tem permissão para aceitar esta solicitação');
+    }
+    
+    // Verificar se a solicitação ainda está pendente
+    if (swapRequest.status !== 'pending') {
+      throw new Error('Esta solicitação já foi respondida');
+    }
+    
+    // Buscar as atribuições atuais
+    const offeredAssignmentRef = doc(db, 'dailyAssignments', swapRequest.offeredAssignmentId);
+    const requestedAssignmentRef = doc(db, 'dailyAssignments', swapRequest.requestedAssignmentId);
+    
+    const [offeredSnap, requestedSnap] = await Promise.all([
+      getDoc(offeredAssignmentRef),
+      getDoc(requestedAssignmentRef)
+    ]);
+    
+    if (!offeredSnap.exists() || !requestedSnap.exists()) {
+      throw new Error('Uma ou ambas as tarefas não foram encontradas');
+    }
+    
+    const offeredAssignment = offeredSnap.data() as DailyAssignment;
+    const requestedAssignment = requestedSnap.data() as DailyAssignment;
+    
+    // Executar a troca em uma transação para garantir consistência
+    await runTransaction(db, async (transaction) => {
+      // Trocar os assignedToId e assignedToName entre as tarefas
+      transaction.update(offeredAssignmentRef, {
+        assignedToId: requestedAssignment.assignedToId,
+        assignedToName: requestedAssignment.assignedToName,
+        swapped: true,
+        swappedAt: Timestamp.now(),
+        swappedWith: requestedAssignment.assignedToName,
+      });
+      
+      transaction.update(requestedAssignmentRef, {
+        assignedToId: offeredAssignment.assignedToId,
+        assignedToName: offeredAssignment.assignedToName,
+        swapped: true,
+        swappedAt: Timestamp.now(),
+        swappedWith: offeredAssignment.assignedToName,
+      });
+      
+      // Atualizar o status da solicitação
+      transaction.update(swapRequestRef, {
+        status: 'accepted',
+        respondedAt: Timestamp.now(),
+        respondedBy: userId,
+      });
+    });
+    
+  } catch (error) {
+    throw new Error(`Erro ao aceitar troca: ${error instanceof Error ? error.message : 'Desconhecido'}`);
+  }
+};
+
+/**
+ * Recusa um pedido de troca de tarefa
+ */
+export const declineTaskSwapRequest = async (
+  swapRequestId: string,
+  userId: string
+): Promise<void> => {
+  try {
+    const swapRequestRef = doc(db, 'taskSwapRequests', swapRequestId);
+    
+    await updateDoc(swapRequestRef, {
+      status: 'declined',
+      respondedAt: Timestamp.now(),
+      respondedBy: userId,
+    });
+  } catch (error) {
+    throw new Error(`Erro ao recusar troca: ${error instanceof Error ? error.message : 'Desconhecido'}`);
+  }
+};

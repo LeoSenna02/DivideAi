@@ -86,6 +86,15 @@ export function Calendar({
     );
   };
 
+  // Verificar se é a data selecionada
+  const isSelected = (date: Date): boolean => {
+    return (
+      date.getDate() === currentDate.getDate() &&
+      date.getMonth() === currentDate.getMonth() &&
+      date.getFullYear() === currentDate.getFullYear()
+    );
+  };
+
   // Verificar se é o mês atual
   const isCurrentMonth = (date: Date): boolean => {
     return date.getMonth() === currentDate.getMonth();
@@ -254,6 +263,8 @@ export function Calendar({
                       className={`min-h-16 sm:min-h-24 p-1.5 sm:p-2 border rounded-lg transition-all cursor-pointer ${
                         isToday_
                           ? 'bg-primary-50 border-primary-300 ring-2 ring-primary-200'
+                          : isSelected(date)
+                          ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
                           : isCurrent
                           ? 'bg-white border-secondary-200 hover:border-primary-300 hover:bg-primary-50'
                           : 'bg-gray-50 border-gray-200 opacity-50'
@@ -280,19 +291,34 @@ export function Calendar({
                       {/* Indicadores de tarefas */}
                       <div className="space-y-0.5 sm:space-y-1">
                         {total > 0 && (
-                          <div className="flex items-center gap-1">
-                            <div className="flex-1 h-1 sm:h-1.5 bg-secondary-200 rounded-full overflow-hidden">
+                          <>
+                            {/* Mobile: Ponto colorido */}
+                            <div className="sm:hidden flex justify-center">
                               <div
-                                className="h-full bg-success-500 transition-all"
-                                style={{
-                                  width: total > 0 ? `${(completed / total) * 100}%` : '0%',
-                                }}
+                                className={`w-2 h-2 rounded-full ${
+                                  isToday_
+                                    ? 'bg-primary-500'
+                                    : date < new Date() && date.toDateString() !== new Date().toDateString()
+                                    ? 'bg-secondary-400'
+                                    : 'bg-warning-500'
+                                }`}
                               />
                             </div>
-                            <span className="text-xs font-medium text-secondary-600">
-                              {total}
-                            </span>
-                          </div>
+                            {/* Desktop: Barra de progresso */}
+                            <div className="hidden sm:flex items-center gap-1">
+                              <div className="flex-1 h-1 sm:h-1.5 bg-secondary-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-success-500 transition-all"
+                                  style={{
+                                    width: total > 0 ? `${(completed / total) * 100}%` : '0%',
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium text-secondary-600">
+                                {total}
+                              </span>
+                            </div>
+                          </>
                         )}
                         {dayAssignments.length > 0 && dayAssignments.length <= 2 && (
                           <div className="space-y-0.5">
@@ -368,6 +394,8 @@ export function Calendar({
                     className={`bg-white rounded-lg shadow-sm border p-3 sm:p-4 min-h-32 sm:min-h-40 ${
                       isToday_
                         ? 'border-primary-300 ring-2 ring-primary-200 bg-primary-50'
+                        : isSelected(date)
+                        ? 'border-blue-300 ring-2 ring-blue-200 bg-blue-50'
                         : 'border-secondary-200'
                     }`}
                   >
@@ -393,23 +421,38 @@ export function Calendar({
 
                     {/* Indicador de progresso */}
                     {total > 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-xs text-secondary-600 mb-1">
-                          <span>{completed}/{total} tarefas</span>
-                          <span>{Math.round((completed / total) * 100)}%</span>
-                        </div>
-                        <div className="w-full bg-secondary-200 rounded-full h-2">
+                      <>
+                        {/* Mobile: Ponto colorido */}
+                        <div className="sm:hidden flex justify-center mb-3">
                           <div
-                            className="bg-success-500 h-2 rounded-full transition-all"
-                            style={{ width: `${(completed / total) * 100}%` }}
+                            className={`w-3 h-3 rounded-full ${
+                              isToday_
+                                ? 'bg-primary-500'
+                                : date < new Date() && date.toDateString() !== new Date().toDateString()
+                                ? 'bg-secondary-400'
+                                : 'bg-warning-500'
+                            }`}
                           />
                         </div>
-                      </div>
+                        {/* Desktop: Barra de progresso completa */}
+                        <div className="hidden sm:block mb-3">
+                          <div className="flex items-center justify-between text-xs text-secondary-600 mb-1">
+                            <span>{completed}/{total} tarefas</span>
+                            <span>{Math.round((completed / total) * 100)}%</span>
+                          </div>
+                          <div className="w-full bg-secondary-200 rounded-full h-2">
+                            <div
+                              className="bg-success-500 h-2 rounded-full transition-all"
+                              style={{ width: `${(completed / total) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      </>
                     )}
 
                     {/* Lista de tarefas */}
-                    <div className="space-y-1 max-h-20 sm:max-h-24 overflow-y-auto">
-                      {dayAssignments.slice(0, 3).map(assignment => (
+                    <div className="space-y-1 max-h-20 sm:max-h-24 overflow-y-auto scroll-elegant">
+                      {dayAssignments.map(assignment => (
                         <div
                           key={assignment.id}
                           onClick={(e) => {
@@ -426,11 +469,6 @@ export function Calendar({
                           {assignment.taskTitle}
                         </div>
                       ))}
-                      {dayAssignments.length > 3 && (
-                        <div className="text-xs text-secondary-500 px-1.5 sm:px-2">
-                          +{dayAssignments.length - 3} mais...
-                        </div>
-                      )}
                       {dayAssignments.length === 0 && (
                         <div className="text-xs text-secondary-400 text-center py-2">
                           Sem tarefas

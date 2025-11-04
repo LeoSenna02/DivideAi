@@ -6,10 +6,13 @@ import { useAuth } from '../context/AuthContext';
 import { Navigation } from '../components/Navigation';
 import { Fab } from '../components/Fab';
 import { TaskCard } from '../components/TaskCard';
+import { SwapTaskModal } from '../components/SwapTaskModal';
 import { useTaskDistribution } from '../hooks/useTaskDistribution';
-import { getHomeMembers, ensureAdminInHomeMembers, skipAssignment } from '../services/firestoreService';
+import { getHomeMembers, ensureAdminInHomeMembers, skipAssignment, isHomeAdmin, createTaskSwapRequest, acceptTaskSwapRequest, declineTaskSwapRequest } from '../services/firestoreService';
+import { onSnapshot, collection, query, where } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import type { DailyAssignment } from '../types';
-import type { HomeMember } from '../types';
+import type { HomeMember, TaskSwapRequest } from '../types';
 
 interface TasksByPerson {
   userId: string;
@@ -34,20 +37,35 @@ export function TasksPage() {
   const [members, setMembers] = useState<HomeMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [distributing, setDistributing] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [selectedAssignmentForSwap, setSelectedAssignmentForSwap] = useState<DailyAssignment | null>(null);
+  const [swapLoading, setSwapLoading] = useState(false);
+  const [pendingSwapRequests, setPendingSwapRequests] = useState<TaskSwapRequest[]>([]);
 
-  // Carregar membros do lar e garantir que admin está registrado
+  // Verificar se o usuário é membro do lar e carregar dados
   useEffect(() => {
     const loadMembers = async () => {
       if (!homeId || !user) return;
       
       try {
         setLoadingMembers(true);
+        setAccessDenied(false);
         
         // Garantir que o admin está em homeMembers
         await ensureAdminInHomeMembers(homeId, user.id, user.name || 'Usuário');
         
         // Depois carregar membros
         const homeMembers = await getHomeMembers(homeId);
+        
+        // Verificar se o usuário é membro do lar
+        const isMember = homeMembers.some(m => m.userId === user.id);
+        if (!isMember && !await isHomeAdmin(homeId, user.id)) {
+          setAccessDenied(true);
+          console.error(`Acesso negado: Usuário ${user.id} não é membro do lar ${homeId}`);
+          return;
+        }
+
         setMembers(homeMembers);
       } catch (err) {
         console.error('Erro ao carregar membros:', err);
@@ -57,6 +75,33 @@ export function TasksPage() {
     };
 
     loadMembers();
+  }, [homeId, user]);
+
+  // Buscar solicitações de troca pendentes em tempo real
+  useEffect(() => {
+    if (!homeId || !user) return;
+
+    const swapRequestsRef = collection(db, 'taskSwapRequests');
+    const q = query(
+      swapRequestsRef,
+      where('homeId', '==', homeId),
+      where('requestedToUserId', '==', user.id),
+      where('status', '==', 'pending')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const requests = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+        respondedAt: doc.data().respondedAt?.toDate?.() || undefined,
+      })) as TaskSwapRequest[];
+      setPendingSwapRequests(requests);
+    }, (error) => {
+      console.error('Erro ao ouvir solicitações de troca:', error);
+    });
+
+    return () => unsubscribe();
   }, [homeId, user]);
 
   // Distribuir tarefas
@@ -96,6 +141,66 @@ export function TasksPage() {
       // quando Firestore refletir as mudanças
     } catch (err) {
       console.error('Erro ao pular tarefa:', err);
+    }
+  };
+
+  // Iniciar troca de tarefa
+  const handleSwapTask = (assignment: DailyAssignment) => {
+    setSelectedAssignmentForSwap(assignment);
+    setSwapModalOpen(true);
+  };
+
+  // Confirmar troca de tarefa
+  const handleSwapConfirm = async (swapRequest: Omit<TaskSwapRequest, 'id' | 'createdAt'>) => {
+    try {
+      setSwapLoading(true);
+      if (!user) return;
+
+      const completeSwapRequest: TaskSwapRequest = {
+        ...swapRequest,
+        id: '', // Será gerado pelo Firestore
+        createdAt: new Date(),
+        requestedByUserId: user.id,
+        requestedByName: user.name || 'Usuário',
+      };
+
+      await createTaskSwapRequest(completeSwapRequest);
+    } catch (err) {
+      console.error('Erro ao propor troca:', err);
+      throw err; // Re-throw para o modal mostrar o erro
+    } finally {
+      setSwapLoading(false);
+    }
+  };
+
+  // Fechar modal de troca
+  const handleSwapModalClose = () => {
+    setSwapModalOpen(false);
+    setSelectedAssignmentForSwap(null);
+  };
+
+  // Aceitar solicitação de troca
+  const handleAcceptSwap = async (requestId: string) => {
+    try {
+      await acceptTaskSwapRequest(requestId, user?.id || '');
+      
+      // O listener em tempo real atualizará automaticamente as solicitações pendentes
+      // e o useTaskDistribution atualizará as tarefas automaticamente
+    } catch (error) {
+      console.error('Erro ao aceitar troca:', error);
+      throw error; // Re-throw para o modal mostrar o erro
+    }
+  };
+
+  // Recusar solicitação de troca
+  const handleDeclineSwap = async (requestId: string) => {
+    try {
+      await declineTaskSwapRequest(requestId, user?.id || '');
+      
+      // O listener em tempo real atualizará automaticamente as solicitações pendentes
+    } catch (error) {
+      console.error('Erro ao recusar troca:', error);
+      throw error; // Re-throw para o modal mostrar o erro
     }
   };
 
@@ -161,6 +266,24 @@ export function TasksPage() {
     );
   }
 
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🚫</div>
+          <h1 className="text-2xl font-bold text-danger-600 mb-2">Acesso Negado</h1>
+          <p className="text-secondary-600 mb-6">Você não tem permissão para acessar este lar.</p>
+          <button
+            onClick={() => navigate('/', { replace: true })}
+            className="btn btn-primary"
+          >
+            Voltar aos Meus Lares
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const tasksByPerson = getTasksByPerson();
   const homePath = `/home/${homeId}`;
   const showFab = location.pathname === homePath || location.pathname === `${homePath}/`;
@@ -217,23 +340,62 @@ export function TasksPage() {
         </div>
 
         {/* Lista de Tarefas por Pessoa */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tasksByPerson.map((person) => (
-            <TaskCard
-              key={person.userId}
-              person={person}
-              otherMembers={members.filter(m => m.userId !== person.userId)}
-              onTaskToggle={handleTaskToggle}
-              onSkipTask={handleSkipTask}
-            />
-          ))}
-        </div>
+        {tasksByPerson.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <div className="w-24 h-24 mx-auto mb-6 bg-primary-50 rounded-full flex items-center justify-center">
+                <svg className="w-12 h-12 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-secondary-900 mb-3">Tudo em Ordem!</h2>
+              <p className="text-secondary-600 mb-8 leading-relaxed">
+                Não há tarefas distribuídas para hoje. Clique em "Distribuir Tarefas" para começar a dividir as responsabilidades de forma justa e equilibrada.
+              </p>
+              <div className="flex justify-center">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 max-w-sm">
+                  <p className="text-sm text-primary-700 font-medium">
+                    💡 Dica: Adicione tarefas no menu de gerenciamento para ter mais opções na distribuição.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tasksByPerson.map((person) => (
+              <TaskCard
+                key={person.userId}
+                person={person}
+                otherMembers={members.filter(m => m.userId !== person.userId)}
+                onTaskToggle={handleTaskToggle}
+                onSkipTask={handleSkipTask}
+                onSwapTask={handleSwapTask}
+                pendingSwapRequests={pendingSwapRequests}
+                onAcceptSwap={handleAcceptSwap}
+                onDeclineSwap={handleDeclineSwap}
+                currentUserId={user?.id}
+              />
+            ))}
+          </div>
+        )}
       </main>
 
       {/* FAB: aparece somente na tela de Início do lar (rota /home/:homeId) */}
       {showFab && (
         <Fab onClick={() => navigate(`/home/${homeId}/manage-tasks`)} label="Adicionar Tarefa" />
       )}
+
+      {/* Modal de Troca de Tarefa */}
+      <SwapTaskModal
+        isOpen={swapModalOpen}
+        onClose={handleSwapModalClose}
+        myAssignment={selectedAssignmentForSwap}
+        otherMembers={members.filter(m => selectedAssignmentForSwap && m.userId !== selectedAssignmentForSwap.assignedToId)}
+        allAssignments={assignments}
+        onConfirm={handleSwapConfirm}
+        loading={swapLoading}
+      />
 
       <Navigation />
     </div>

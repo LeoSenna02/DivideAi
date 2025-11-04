@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Observar mudanças no estado de autenticação
   useEffect(() => {
-    const unsubscribe = onAuthChange((authUser) => {
+    const unsubscribe = onAuthChange(async (authUser) => {
       setUser(authUser);
       setLoading(false);
     });

@@ -1,11 +1,11 @@
 // Página de Ranking - Competição entre membros do lar
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Navigation } from '../components/Navigation';
 import { getHomeMembers } from '../services/firestoreService';
-import { getMonthlyScores, ensureAdminInHomeMembers } from '../services/firestoreService';
+import { getMonthlyScores, ensureAdminInHomeMembers, isHomeAdmin } from '../services/firestoreService';
 import type { HomeMember, MonthlyScore } from '../types';
 
 interface RankingMember {
@@ -21,6 +21,7 @@ interface RankingMember {
 
 export function RankingPage() {
   const { homeId } = useParams<{ homeId: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [members, setMembers] = useState<HomeMember[]>([]);
@@ -28,6 +29,7 @@ export function RankingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // Carregar dados
   useEffect(() => {
@@ -37,6 +39,7 @@ export function RankingPage() {
       try {
         setLoading(true);
         setError(null);
+        setAccessDenied(false);
 
         // Garantir que o admin está em homeMembers
         await ensureAdminInHomeMembers(homeId, user.id, user.name || 'Usuário');
@@ -46,11 +49,19 @@ export function RankingPage() {
           getMonthlyScores(homeId),
         ]);
 
+        // Verificar se o usuário é membro do lar
+        const isMember = homeMembers.some(m => m.userId === user.id);
+        if (!isMember && !await isHomeAdmin(homeId, user.id)) {
+          setAccessDenied(true);
+          console.error(`Acesso negado: Usuário ${user.id} não é membro do lar ${homeId}`);
+          return;
+        }
+
         setMembers(homeMembers);
         setMonthlyScores(scores);
 
-        // Simular current user (em produção, pegar do contexto de auth)
-        setCurrentUserId(homeMembers[0]?.userId || '');
+        // Definir o usuário atual logado
+        setCurrentUserId(user.id);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar ranking');
       } finally {
@@ -131,6 +142,24 @@ export function RankingPage() {
     );
   }
 
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🚫</div>
+          <h1 className="text-2xl font-bold text-danger-600 mb-2">Acesso Negado</h1>
+          <p className="text-secondary-600 mb-6">Você não tem permissão para acessar este lar.</p>
+          <button
+            onClick={() => navigate('/', { replace: true })}
+            className="btn btn-primary"
+          >
+            Voltar aos Meus Lares
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const ranking = getRanking();
   const topThree = ranking.slice(0, 3);
 
@@ -169,7 +198,7 @@ export function RankingPage() {
                       <span className="text-lg font-bold text-gray-600">{topThree[1].initials}</span>
                     </div>
                     <h3 className="font-semibold text-secondary-900 mb-1">{topThree[1].name}</h3>
-                    <p className="text-2xl font-bold text-gray-600">{topThree[1].score} pts</p>
+                    <p className="text-2xl font-bold text-gray-600">{Math.round(topThree[1].score)} pts</p>
                     <p className="text-sm text-secondary-500 mt-1">{topThree[1].tasksAssigned} tarefas</p>
                   </div>
                 </div>
@@ -187,7 +216,7 @@ export function RankingPage() {
                       <span className="text-xl font-bold text-yellow-800">{topThree[0].initials}</span>
                     </div>
                     <h3 className="font-bold text-secondary-900 mb-1 text-lg">{topThree[0].name}</h3>
-                    <p className="text-3xl font-bold text-yellow-700">{topThree[0].score} pts</p>
+                    <p className="text-3xl font-bold text-yellow-700">{Math.round(topThree[0].score)} pts</p>
                     <p className="text-sm text-secondary-600 mt-1">{topThree[0].tasksAssigned} tarefas</p>
                   </div>
                 </div>
@@ -202,7 +231,7 @@ export function RankingPage() {
                       <span className="text-lg font-bold text-orange-600">{topThree[2].initials}</span>
                     </div>
                     <h3 className="font-semibold text-secondary-900 mb-1">{topThree[2].name}</h3>
-                    <p className="text-2xl font-bold text-orange-600">{topThree[2].score} pts</p>
+                    <p className="text-2xl font-bold text-orange-600">{Math.round(topThree[2].score)} pts</p>
                     <p className="text-sm text-secondary-500 mt-1">{topThree[2].tasksAssigned} tarefas</p>
                   </div>
                 </div>
@@ -240,7 +269,7 @@ export function RankingPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-primary-600">{member.score} pts</p>
+                    <p className="text-xl font-bold text-primary-600">{Math.round(member.score)} pts</p>
                     <p className="text-xs text-secondary-500">Peso total: {member.totalWeight}</p>
                   </div>
                 </div>
@@ -259,7 +288,7 @@ export function RankingPage() {
                 <p className="text-sm text-secondary-600">Membros</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-primary-600">{ranking.reduce((sum, m) => sum + m.score, 0)}</p>
+                <p className="text-2xl font-bold text-primary-600">{Math.round(ranking.reduce((sum, m) => sum + m.score, 0))}</p>
                 <p className="text-sm text-secondary-600">Pontos Totais</p>
               </div>
               <div>

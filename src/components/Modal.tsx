@@ -61,11 +61,11 @@ export function Modal({
     >
       <div
         ref={modalRef}
-        className={`bg-white rounded-lg shadow-xl ${maxWidth} w-full animate-in`}
+        className={`bg-white rounded-xl shadow-xl ${maxWidth} w-full animate-in`}
         onClick={(e) => e.stopPropagation()} // Previne que clicks dentro do modal fechem ele
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between rounded-t-xl">
           <h3 className="text-lg font-bold text-white">{title}</h3>
           <button
             onClick={onClose}
@@ -83,7 +83,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="bg-secondary-50 px-6 py-4 border-t border-secondary-200 flex gap-3">
+          <div className="bg-secondary-50 px-6 py-4 border-t border-secondary-200 flex gap-3 rounded-b-xl">
             {footer}
           </div>
         )}

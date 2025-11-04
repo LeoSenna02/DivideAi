@@ -216,5 +216,31 @@ body {
   .text-secondary-light {
     @apply text-secondary-600;
   }
+
+  /* Scrollbar elegante para o projeto */
+  .scroll-elegant {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175) rgb(229 231 235);
+  }
+
+  .scroll-elegant::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scroll-elegant::-webkit-scrollbar-track {
+    @apply bg-secondary-100 rounded-full;
+  }
+
+  .scroll-elegant::-webkit-scrollbar-thumb {
+    @apply bg-secondary-300 rounded-full;
+  }
+
+  .scroll-elegant::-webkit-scrollbar-thumb:hover {
+    @apply bg-secondary-400;
+  }
+
+  .scroll-elegant::-webkit-scrollbar-corner {
+    @apply bg-secondary-100;
+  }
 }
 

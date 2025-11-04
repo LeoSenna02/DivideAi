@@ -5,8 +5,54 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { useAuth } from '../context/AuthContext';
 import { createTask, getHomeTasksById, deleteTask, updateTask } from '../services/firestoreService';
-import { LuPencil, LuTrash2, LuUsers } from 'react-icons/lu';
+import { LuPencil, LuTrash2, LuUsers, LuWand } from 'react-icons/lu';
+import { Checkbox } from '../components/Checkbox';
+import { Modal } from '../components/Modal';
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import type { Task } from '../types';
+
+// Biblioteca de tarefas sugeridas por categoria
+const SUGGESTED_TASKS = {
+  'Cozinha': [
+    { title: 'Lavar a louça', weight: 2, frequency: 'diaria' as const },
+    { title: 'Limpar a pia', weight: 1, frequency: 'diaria' as const },
+    { title: 'Fazer café da manhã', weight: 2, frequency: 'diaria' as const },
+    { title: 'Fazer almoço', weight: 3, frequency: 'diaria' as const },
+    { title: 'Fazer janta', weight: 3, frequency: 'diaria' as const },
+    { title: 'Limpar fogão', weight: 3, frequency: 'semanal' as const },
+    { title: 'Limpeza profunda da cozinha', weight: 4, frequency: 'quinzenal' as const },
+  ],
+  'Limpeza': [
+    { title: 'Passar aspirador', weight: 2, frequency: 'semanal' as const },
+    { title: 'Varrer a casa', weight: 1, frequency: 'diaria' as const },
+    { title: 'Limpar banheiro', weight: 3, frequency: 'semanal' as const },
+    { title: 'Trocar toalhas', weight: 1, frequency: 'semanal' as const },
+    { title: 'Lavar roupa', weight: 2, frequency: 'semanal' as const },
+    { title: 'Passar roupa', weight: 3, frequency: 'semanal' as const },
+    { title: 'Limpeza de vidros', weight: 2, frequency: 'semanal' as const },
+    { title: 'Limpeza profunda', weight: 4, frequency: 'quinzenal' as const },
+  ],
+  'Jardim': [
+    { title: 'Regar plantas', weight: 1, frequency: 'diaria' as const },
+    { title: 'Capinar jardim', weight: 3, frequency: 'semanal' as const },
+    { title: 'Podar plantas', weight: 3, frequency: 'quinzenal' as const },
+    { title: 'Limpeza do jardim', weight: 2, frequency: 'semanal' as const },
+  ],
+  'Compras': [
+    { title: 'Compras de supermercado', weight: 3, frequency: 'semanal' as const },
+    { title: 'Compras de farmácia', weight: 2, frequency: 'quinzenal' as const },
+  ],
+  'Organização': [
+    { title: 'Organizar sala', weight: 2, frequency: 'semanal' as const },
+    { title: 'Organizar armários', weight: 3, frequency: 'quinzenal' as const },
+    { title: 'Organizar geladeira', weight: 1, frequency: 'semanal' as const },
+  ],
+  'Pets': [
+    { title: 'Alimentar animal de estimação', weight: 1, frequency: 'diaria' as const },
+    { title: 'Limpeza da caixa de areia', weight: 2, frequency: 'diaria' as const },
+    { title: 'Banho do pet', weight: 3, frequency: 'semanal' as const },
+  ],
+};
 
 export function ManageTasksPage() {
   const { homeId } = useParams<{ homeId: string }>();
@@ -24,6 +70,9 @@ export function ManageTasksPage() {
   const [editName, setEditName] = useState('');
   const [editWeight, setEditWeight] = useState(3);
   const [editFrequency, setEditFrequency] = useState<'diaria' | 'semanal' | 'quinzenal'>('diaria');
+  const [showSuggestedTasks, setShowSuggestedTasks] = useState(false);
+  const [selectedSuggestedTasks, setSelectedSuggestedTasks] = useState<Set<string>>(new Set());
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -87,14 +136,25 @@ export function ManageTasksPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (task: Task) => {
+    setTaskToDelete(task);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!taskToDelete) return;
+
     try {
       setError(null);
-      await deleteTask(id);
-      setTasks(prev => prev.filter(t => t.id !== id));
+      await deleteTask(taskToDelete.id);
+      setTasks(prev => prev.filter(t => t.id !== taskToDelete.id));
+      setTaskToDelete(null);
     } catch (err) {
       setError('Erro ao deletar tarefa');
     }
+  };
+
+  const handleCancelDelete = () => {
+    setTaskToDelete(null);
   };
 
   const handleEdit = (id: string) => {
@@ -144,6 +204,75 @@ export function ManageTasksPage() {
     setEditName('');
     setEditWeight(3);
     setEditFrequency('diaria');
+  };
+
+  const handleToggleSuggestedTask = (taskKey: string) => {
+    const newSelected = new Set(selectedSuggestedTasks);
+    if (newSelected.has(taskKey)) {
+      newSelected.delete(taskKey);
+    } else {
+      newSelected.add(taskKey);
+    }
+    setSelectedSuggestedTasks(newSelected);
+  };
+
+  // Verifica se uma tarefa sugerida já foi importada
+  const isTaskAlreadyImported = (suggestedTask: { title: string; weight: number; frequency: string }) => {
+    return tasks.some(task => 
+      task.title.toLowerCase() === suggestedTask.title.toLowerCase() &&
+      task.weight === suggestedTask.weight &&
+      task.frequency === suggestedTask.frequency
+    );
+  };
+
+  // Conta quantas tarefas selecionadas ainda não foram importadas
+  const getTasksToAddCount = () => {
+    return Array.from(selectedSuggestedTasks).filter(taskKey => {
+      const [category, taskIndex] = taskKey.split('-');
+      const suggestedTask = SUGGESTED_TASKS[category as keyof typeof SUGGESTED_TASKS]?.[parseInt(taskIndex)];
+      return suggestedTask && !isTaskAlreadyImported(suggestedTask);
+    }).length;
+  };
+
+  const handleAddSuggestedTasks = async () => {
+    if (selectedSuggestedTasks.size === 0 || !homeId || !user) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Filtrar apenas tarefas que não foram importadas ainda
+      const tasksToAdd = Array.from(selectedSuggestedTasks).filter(taskKey => {
+        const [category, taskIndex] = taskKey.split('-');
+        const suggestedTask = SUGGESTED_TASKS[category as keyof typeof SUGGESTED_TASKS]?.[parseInt(taskIndex)];
+        return suggestedTask && !isTaskAlreadyImported(suggestedTask);
+      });
+
+      for (const taskKey of tasksToAdd) {
+        const [category, taskIndex] = taskKey.split('-');
+        const suggestedTask = SUGGESTED_TASKS[category as keyof typeof SUGGESTED_TASKS]?.[parseInt(taskIndex)];
+        
+        if (suggestedTask) {
+          const newTask = await createTask(
+            homeId,
+            suggestedTask.title,
+            '',
+            user.id,
+            suggestedTask.weight,
+            suggestedTask.frequency
+          );
+          setTasks(prev => [newTask, ...prev]);
+        }
+      }
+
+      setSelectedSuggestedTasks(new Set());
+      setShowSuggestedTasks(false);
+    } catch (err) {
+      setError('Erro ao adicionar tarefas sugeridas');
+      console.error('Erro ao adicionar tarefas:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -270,23 +399,27 @@ export function ManageTasksPage() {
         <div className="mt-6">
           <h3 className="text-lg font-semibold text-secondary-900 mb-3">Tarefas Cadastradas</h3>
 
-          <div className="space-y-3">
-            {tasks.map(t => (
-              <div key={t.id} className="bg-neutral-white p-4 rounded-lg shadow-sm border border-secondary-200 flex items-start justify-between hover:border-secondary-300 transition-colors">
-                <div className="flex-1">
-                  <div className="font-medium text-secondary-900">{t.title}</div>
-                  <div className="text-xs text-secondary-500">{t.frequency === 'semanal' ? 'Semanal' : t.frequency === 'quinzenal' ? 'Quinzenal' : 'Diária'} • Peso: {t.weight}/5</div>
-                </div>
-                <div className="flex items-center space-x-2 ml-4">
-                  <button onClick={() => handleEdit(t.id)} className="text-secondary-500 hover:text-secondary-700 p-2 transition-colors">
-                    <LuPencil className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(t.id)} className="text-danger-500 hover:text-danger-600 p-2 transition-colors">
-                    <LuTrash2 className="w-4 h-4" />
-                  </button>
-                </div>
+          <div className="bg-neutral-white rounded-lg shadow-sm border border-secondary-200 overflow-hidden">
+            <div className="max-h-96 overflow-y-auto scroll-elegant">
+              <div className="divide-y divide-secondary-100">
+                {tasks.map(t => (
+                  <div key={t.id} className="p-4 flex items-start justify-between hover:bg-secondary-25 transition-colors">
+                    <div className="flex-1">
+                      <div className="font-medium text-secondary-900">{t.title}</div>
+                      <div className="text-xs text-secondary-500">{t.frequency === 'semanal' ? 'Semanal' : t.frequency === 'quinzenal' ? 'Quinzenal' : 'Diária'} • Peso: {t.weight}/5</div>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      <button onClick={() => handleEdit(t.id)} className="text-secondary-500 hover:text-secondary-700 p-2 transition-colors">
+                        <LuPencil className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(t)} className="text-danger-500 hover:text-danger-600 p-2 transition-colors">
+                        <LuTrash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
@@ -297,6 +430,28 @@ export function ManageTasksPage() {
             className="w-full bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white font-semibold py-3 rounded-lg transition-colors"
           >
             {saving ? 'Salvando...' : 'Adicionar Tarefa'}
+          </button>
+        </div>
+
+        <div className="mt-3">
+          <button
+            onClick={() => {
+              // Inicializar com tarefas já importadas marcadas
+              const alreadyImported = new Set<string>();
+              Object.entries(SUGGESTED_TASKS).forEach(([category, tasks]) => {
+                tasks.forEach((task, idx) => {
+                  if (isTaskAlreadyImported(task)) {
+                    alreadyImported.add(`${category}-${idx}`);
+                  }
+                });
+              });
+              setSelectedSuggestedTasks(alreadyImported);
+              setShowSuggestedTasks(true);
+            }}
+            className="w-full bg-primary-100 hover:bg-primary-200 text-primary-700 font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <LuWand className="w-5 h-5" />
+            Usar Tarefas Sugeridas
           </button>
         </div>
       </main>
@@ -386,6 +541,104 @@ export function ManageTasksPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Tarefas Sugeridas */}
+      <Modal
+        isOpen={showSuggestedTasks}
+        onClose={() => {
+          setShowSuggestedTasks(false);
+          setSelectedSuggestedTasks(new Set());
+        }}
+        title="Biblioteca de Tarefas Sugeridas"
+        maxWidth="max-w-lg"
+        footer={
+          <>
+            <button
+              onClick={() => {
+                setShowSuggestedTasks(false);
+                setSelectedSuggestedTasks(new Set());
+              }}
+              className="flex-1 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleAddSuggestedTasks}
+              disabled={saving || getTasksToAddCount() === 0}
+              className="flex-1 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+            >
+              <LuWand className="w-3 h-3" />
+              {saving ? 'Adicionando...' : `Adicionar (${getTasksToAddCount()})`}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-secondary-600">
+            Selecione as tarefas que deseja adicionar ao seu lar. Tarefas já importadas aparecem marcadas e não podem ser selecionadas novamente.
+          </p>
+
+          <div className="max-h-80 overflow-y-auto space-y-4 scroll-elegant">
+            {Object.entries(SUGGESTED_TASKS).map(([category, tasks]) => (
+              <div key={category}>
+                <h4 className="font-semibold text-secondary-900 mb-2 text-sm">{category}</h4>
+                <div className="space-y-1">
+                  {tasks.map((task, idx) => {
+                    const taskKey = `${category}-${idx}`;
+                    const isSelected = selectedSuggestedTasks.has(taskKey);
+                    const alreadyImported = isTaskAlreadyImported(task);
+                    return (
+                      <div key={taskKey} className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${
+                        alreadyImported 
+                          ? 'bg-success-50 border border-success-200' 
+                          : 'hover:bg-secondary-50'
+                      }`}>
+                        <Checkbox
+                          checked={isSelected || alreadyImported}
+                          onChange={() => !alreadyImported && handleToggleSuggestedTask(taskKey)}
+                          size="sm"
+                          disabled={alreadyImported}
+                        />
+                        <div className="flex-1 cursor-pointer" onClick={() => !alreadyImported && handleToggleSuggestedTask(taskKey)}>
+                          <div className="flex items-center gap-2">
+                            <div className={`font-medium text-secondary-900 text-sm ${alreadyImported ? 'line-through text-secondary-500' : ''}`}>
+                              {task.title}
+                            </div>
+                            {alreadyImported && (
+                              <span className="text-success-600 text-xs font-medium bg-success-100 px-2 py-0.5 rounded-full">
+                                ✓ Já adicionada
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-secondary-500">
+                            {task.frequency === 'diaria' && '📅 Diária'}
+                            {task.frequency === 'semanal' && '📅 Semanal'}
+                            {task.frequency === 'quinzenal' && '📅 Quinzenal'}
+                            {' • '}
+                            <span className="inline-flex items-center gap-1">
+                              {'⭐'.repeat(task.weight)}
+                              ({task.weight}/5)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmDeleteModal
+        isOpen={!!taskToDelete}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        message={`Tem certeza que deseja excluir a tarefa "${taskToDelete?.title}"? Esta ação não pode ser desfeita.`}
+        loading={saving}
+      />
 
       <Navigation />
     </div>

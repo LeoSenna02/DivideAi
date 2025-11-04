@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { useAuth } from '../context/AuthContext';
-import { createInvite, getHomeMembers, removeMember, getHomeInvites, isHomeAdmin } from '../services/firestoreService';
-import { LuUserPlus, LuTrash2, LuMail, LuUser } from 'react-icons/lu';
+import { createInvite, getHomeMembers, removeMember, getHomeInvites, isHomeAdmin, setMemberVacationStatus } from '../services/firestoreService';
+import { LuUserPlus, LuTrash2, LuMail, LuUser, LuSun } from 'react-icons/lu';
 import type { HomeMember, MemberInvite } from '../types';
 
 export function ManageMembersPage() {
@@ -22,6 +22,8 @@ export function ManageMembersPage() {
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<HomeMember | null>(null);
+  const [editingVacation, setEditingVacation] = useState<string | null>(null);
+  const [vacationEndDate, setVacationEndDate] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -118,6 +120,90 @@ export function ManageMembersPage() {
 
   const handleCancelDelete = () => {
     setMemberToDelete(null);
+  };
+
+  const handleToggleVacation = (member: HomeMember) => {
+    if (!isAdmin) {
+      setError('Você não tem permissão para gerenciar férias.');
+      return;
+    }
+
+    if (member.userId === user?.id) {
+      setError('Você não pode gerenciar suas próprias férias.');
+      return;
+    }
+
+    // Se já está em férias, desativa ao clicar novamente
+    if (member.isOnVacation) {
+      handleDeactivateVacation(member);
+      return;
+    }
+
+    setEditingVacation(member.userId);
+    setVacationEndDate('');
+  };
+
+  const handleDeactivateVacation = async (member: HomeMember) => {
+    if (!homeId || !isAdmin) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      console.log('Desativando férias para:', member.userId);
+      await setMemberVacationStatus(homeId, member.userId, false, undefined);
+      console.log('Férias desativadas com sucesso');
+
+      // Atualizar membro localmente
+      setMembers(prev => prev.map(m =>
+        m.userId === member.userId
+          ? { ...m, isOnVacation: false, vacationEndDate: undefined }
+          : m
+      ));
+    } catch (err) {
+      setError('Erro ao desativar férias');
+      console.error('Erro ao desativar férias:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveVacation = async () => {
+    if (!editingVacation || !homeId) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Se não tem data no campo, ativa férias indefinidas (isOnVacation = true, sem data)
+      // Se tem data, ativa férias com data específica
+      const isOnVacation = true; // Sempre ativa férias ao salvar
+      const endDate = vacationEndDate.trim() ? new Date(vacationEndDate) : undefined;
+
+      console.log('Salvando status de férias:', { userId: editingVacation, isOnVacation, endDate });
+      await setMemberVacationStatus(homeId, editingVacation, isOnVacation, endDate);
+      console.log('Status de férias salvo com sucesso');
+
+      // Atualizar membro localmente
+      setMembers(prev => prev.map(m =>
+        m.userId === editingVacation
+          ? { ...m, isOnVacation, vacationEndDate: endDate }
+          : m
+      ));
+
+      setEditingVacation(null);
+      setVacationEndDate('');
+    } catch (err) {
+      setError('Erro ao atualizar status de férias');
+      console.error('Erro ao atualizar férias:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelVacation = () => {
+    setEditingVacation(null);
+    setVacationEndDate('');
   };
 
   if (loading) {
@@ -228,12 +314,23 @@ export function ManageMembersPage() {
           <div className="space-y-3">
             {members.length > 0 ? (
               members.map(member => (
-                <div key={member.userId} className="bg-neutral-white p-4 rounded-lg shadow-sm border border-secondary-200 flex items-center justify-between hover:border-secondary-300 transition-colors">
+                <div key={member.userId} className={`bg-neutral-white p-4 rounded-lg shadow-sm border border-secondary-200 flex items-center justify-between hover:border-secondary-300 transition-colors ${
+                  member.isOnVacation ? 'bg-warning-25 border-warning-200' : ''
+                }`}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-primary-600 font-medium">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center relative ${
+                      member.isOnVacation ? 'bg-warning-100' : 'bg-primary-100'
+                    }`}>
+                      <span className={`font-medium ${
+                        member.isOnVacation ? 'text-warning-700' : 'text-primary-600'
+                      }`}>
                         {(member.userName || member.userId).charAt(0).toUpperCase()}
                       </span>
+                      {member.isOnVacation && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-warning-500 rounded-full flex items-center justify-center">
+                          <LuSun className="w-3 h-3 text-white" />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <div className="font-medium text-secondary-900 flex items-center gap-2">
@@ -246,19 +343,43 @@ export function ManageMembersPage() {
                       </div>
                       <div className="text-sm text-secondary-500">
                         Entrou em {new Date(member.joinedAt).toLocaleDateString('pt-BR')}
+                        {member.isOnVacation && (
+                          <span className="block text-warning-600 font-medium">
+                            {member.vacationEndDate 
+                              ? `🏖️ Férias até ${member.vacationEndDate.toLocaleDateString('pt-BR')}`
+                              : '🏖️ Em férias (indefinidas)'
+                            }
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {isAdmin && member.userId !== user?.id && (
-                    <button
-                      onClick={() => handleRemoveMember(member)}
-                      className="text-danger-500 hover:text-danger-600 p-2 transition-colors"
-                      title="Remover membro"
-                    >
-                      <LuTrash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {isAdmin && member.userId !== user?.id && (
+                      <button
+                        onClick={() => handleToggleVacation(member)}
+                        className={`p-2 rounded transition-colors ${
+                          member.isOnVacation
+                            ? 'text-warning-500 hover:text-danger-600 hover:bg-danger-50 cursor-pointer'
+                            : 'text-secondary-400 hover:text-warning-600 hover:bg-warning-50 cursor-pointer'
+                        }`}
+                        title={member.isOnVacation ? 'Clique para remover férias' : 'Clique para colocar em férias'}
+                      >
+                        <LuSun className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {isAdmin && member.userId !== user?.id && (
+                      <button
+                        onClick={() => handleRemoveMember(member)}
+                        className="text-danger-500 hover:text-danger-600 p-2 transition-colors"
+                        title="Remover membro"
+                      >
+                        <LuTrash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -324,6 +445,58 @@ export function ManageMembersPage() {
               >
                 <LuTrash2 className="w-4 h-4" />
                 {saving ? 'Removendo...' : 'Remover'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gerenciamento de Férias */}
+      {editingVacation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-neutral-white p-6 rounded-lg shadow-lg border border-secondary-200 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-secondary-900 mb-4 flex items-center gap-2">
+              <LuSun className="w-5 h-5 text-warning-500" />
+              Ativar Férias
+            </h3>
+            
+            <div className="space-y-4 mb-6">
+              <div className="bg-warning-50 border border-warning-200 p-3 rounded-lg">
+                <p className="text-sm text-warning-800">
+                  O membro será excluído da distribuição de tarefas durante o período selecionado.
+                </p>
+              </div>
+
+              <div>
+                <label className="label">Data de fim das férias (opcional)</label>
+                <input
+                  type="date"
+                  className="input w-full"
+                  value={vacationEndDate}
+                  onChange={(e) => setVacationEndDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                <p className="text-xs text-secondary-500 mt-1">
+                  Deixe vazio para férias indefinidas (até desativar manualmente)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelVacation}
+                disabled={saving}
+                className="flex-1 bg-secondary-100 hover:bg-secondary-200 disabled:bg-secondary-100 text-secondary-700 font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveVacation}
+                disabled={saving}
+                className="flex-1 bg-warning-500 hover:bg-warning-600 disabled:bg-warning-300 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <LuSun className="w-4 h-4" />
+                {saving ? 'Ativando...' : 'Ativar Férias'}
               </button>
             </div>
           </div>

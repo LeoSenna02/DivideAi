@@ -13,7 +13,7 @@ import {
   updateMonthlyScoresFromAssignments,
   completeAssignment as completeAssignmentService,
 } from '../services/firestoreService';
-import { distributeDailyTasks, validateMembersForDistribution } from '../services/distributionService';
+import { distributeDailyTasks, getActiveMembers } from '../services/distributionService';
 import { onSnapshot, query, where, collection } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { getDateKey, getMonthKey } from '../services/distributionService';
@@ -98,10 +98,13 @@ export const useTaskDistribution = (homeId: string | undefined): UseTaskDistribu
               dateKey: data.dateKey,
               completed: data.completed || false,
               completedAt: data.completedAt?.toDate?.(),
-              createdAt: data.createdAt?.toDate?.() || new Date(),
               skipped: data.skipped || false,
               skippedAt: data.skippedAt?.toDate?.(),
               skippedBy: data.skippedBy,
+              swapped: data.swapped || false,
+              swappedAt: data.swappedAt?.toDate?.(),
+              swappedWith: data.swappedWith,
+              createdAt: data.createdAt?.toDate?.() || new Date(),
             };
           })
           .filter(assignment => !assignment.skipped); // Filtra tarefas puladas
@@ -174,7 +177,7 @@ export const useTaskDistribution = (homeId: string | undefined): UseTaskDistribu
       ]);
 
       // Validar que todos os membros estão inclusos (admin e member)
-      const validatedMembers = validateMembersForDistribution(members);
+      const validatedMembers = getActiveMembers(members);
 
       if (allTasks.length === 0) {
         setError('Nenhuma tarefa cadastrada. Cadastre tarefas antes de distribuir.');
@@ -206,8 +209,15 @@ export const useTaskDistribution = (homeId: string | undefined): UseTaskDistribu
       // Salvar atribuições no Firestore
       await saveDailyAssignments(result.assignments);
 
+      // Calcular tarefas atribuídas por usuário
+      const assignedTasksCount = new Map<string, number>();
+      result.assignments.forEach(assignment => {
+        const userId = assignment.assignedToId;
+        assignedTasksCount.set(userId, (assignedTasksCount.get(userId) || 0) + 1);
+      });
+
       // Atualizar placares mensais
-      await updateMonthlyScoresFromAssignments(homeId, result.updatedScores);
+      await updateMonthlyScoresFromAssignments(homeId, result.updatedScores, assignedTasksCount);
 
       // Recarregar dados
       await loadData();

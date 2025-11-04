@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
+import { NoHomeYetPage } from './pages/NoHomeYetPage';
 import { TasksPage } from './pages/TasksPage';
 import { ScoreBoardPage } from './pages/ScoreBoardPage';
 import { CalendarPage } from './pages/CalendarPage';
@@ -41,6 +42,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <HomePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/no-home"
+            element={
+              <ProtectedRoute>
+                <NoHomeYetPage />
               </ProtectedRoute>
             }
           />

@@ -22,6 +22,13 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // Lares - membros podem ler, apenas usuários autenticados podem criar, admins podem editar/deletar
+    match /homes/{homeId} {
+      allow read: if request.auth != null && isMember(homeId);
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && isAdmin(homeId);
+    }
+
     // Membros do Lar - apenas leitura para membros, criação/edição restrita
     match /homeMembers/{document=**} {
       allow read: if request.auth != null;
@@ -46,7 +53,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
       allow update: if request.auth != null && 
-                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed', 'completedAt', 'skipped', 'skippedAt', 'skippedBy', 'assignedToId', 'assignedToName']));
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed', 'completedAt', 'skipped', 'skippedAt', 'skippedBy', 'assignedToId', 'assignedToName', 'swapped', 'swappedAt', 'swappedWith']));
       allow delete: if request.auth != null;
     }
 
@@ -60,6 +67,18 @@ service cloud.firestore {
     match /offeredTasks/{taskId} {
       allow read: if request.auth != null;
       allow create, write: if request.auth != null;
+    }
+
+    // ============ SISTEMA DE TROCA DE TAREFAS ============
+
+    // Solicitações de Troca de Tarefas - membros podem criar, ler e atualizar solicitações
+    match /taskSwapRequests/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && 
+                      request.auth.uid == resource.data.requestedToUserId &&
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'respondedAt', 'respondedBy']));
+      allow delete: if request.auth != null;
     }
   }
 }

@@ -3,7 +3,7 @@
 // https://console.firebase.google.com
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
+import { getAuth, type Auth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
 // Suas credenciais do Firebase (obtenha em: Project Settings → Web → Config)
@@ -22,5 +22,12 @@ const app = initializeApp(firebaseConfig);
 // Exportar autenticação e Firestore
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
+
+// Configurar persistência de sessão para LOCAL (padrão)
+// Nota: Janelas anônimas podem compartilhar dados com janelas normais se usarem o mesmo navegador
+// Por isso, adicionamos validação no context de autenticação
+setPersistence(auth, browserLocalPersistence).catch(err => {
+  console.error('Erro ao configurar persistência:', err);
+});
 
 export default app;

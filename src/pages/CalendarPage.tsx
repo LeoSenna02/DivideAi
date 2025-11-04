@@ -6,8 +6,8 @@ import { Calendar } from '../components/Calendar';
 import { Select } from '../components/Select';
 import { Checkbox } from '../components/Checkbox';
 import { useCalendarData } from '../hooks/useCalendarData';
-import { ensureAdminInHomeMembers } from '../services/firestoreService';
-import type { DailyAssignment } from '../types';
+import { ensureAdminInHomeMembers, getHomeTasksById } from '../services/firestoreService';
+import type { DailyAssignment, Task } from '../types';
 import { FiX, FiCheck, FiClock, FiUser } from 'react-icons/fi';
 
 export function CalendarPage() {
@@ -17,16 +17,28 @@ export function CalendarPage() {
   const [selectedAssignment, setSelectedAssignment] = useState<DailyAssignment | null>(null);
   const [filterUser, setFilterUser] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Garantir que o admin está em homeMembers
+  // Garantir que o admin está em homeMembers e carregar tarefas
   useEffect(() => {
-    if (homeId && user) {
-      ensureAdminInHomeMembers(homeId, user.id, user.name || 'Usuário').catch(err => {
-        console.error('Erro ao garantir admin:', err);
-      });
-    }
+    const loadData = async () => {
+      if (homeId && user) {
+        try {
+          // Garantir admin
+          await ensureAdminInHomeMembers(homeId, user.id, user.name || 'Usuário');
+          
+          // Carregar tarefas
+          const homeTasks = await getHomeTasksById(homeId);
+          setTasks(homeTasks);
+        } catch (err) {
+          console.error('Erro ao carregar dados:', err);
+        }
+      }
+    };
+
+    loadData();
   }, [homeId, user]);
 
   // Controla o scroll do body quando modal está aberto
@@ -64,7 +76,7 @@ export function CalendarPage() {
     getAssignmentsByMonth,
     getMonthStats,
     markAssignmentAsCompleted,
-  } = useCalendarData({ homeId: homeId || '' });
+  } = useCalendarData({ homeId: homeId || '', tasks });
 
   if (!homeId) {
     return (
@@ -83,7 +95,10 @@ export function CalendarPage() {
   // Aplicar filtros
   let filteredAssignments = monthAssignments;
   if (filterUser) {
-    filteredAssignments = filteredAssignments.filter(a => a.assignedToId === filterUser);
+    // Manter atribuições virtuais (sem assignedToId) e atribuições filtradas do usuário
+    filteredAssignments = filteredAssignments.filter(a => 
+      a.isVirtual || a.assignedToId === filterUser
+    );
   }
   if (!showCompleted) {
     filteredAssignments = filteredAssignments.filter(a => !a.completed);
@@ -205,58 +220,89 @@ export function CalendarPage() {
             </h3>
 
             {filteredAssignments.filter(a => {
-              const assignDate = new Date(a.dateKey);
-              return (
-                assignDate.toDateString() === currentDate.toDateString()
-              );
+              // Comparar diretamente as chaves de data (formato YYYY-MM-DD)
+              const currentDateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+              return a.dateKey === currentDateKey;
             }).length > 0 ? (
-              <div className="space-y-3">
-                {filteredAssignments
-                  .filter(a => {
-                    const assignDate = new Date(a.dateKey);
-                    return assignDate.toDateString() === currentDate.toDateString();
-                  })
-                  .map(assignment => (
-                    <div
-                      key={assignment.id}
-                      onClick={() => setSelectedAssignment(assignment)}
-                      className={`p-3 sm:p-4 border rounded-lg cursor-pointer transition-all ${
-                        assignment.completed
-                          ? 'bg-success-50 border-success-200 opacity-75'
-                          : 'bg-warning-50 border-warning-200 hover:shadow-md'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className={`font-medium text-sm sm:text-base ${assignment.completed ? 'line-through text-secondary-500' : 'text-secondary-900'}`}>
-                            {assignment.taskTitle}
-                          </h4>
-                          <div className="flex items-center gap-3 sm:gap-4 mt-2 text-xs sm:text-sm text-secondary-600">
-                            <div className="flex items-center gap-1">
-                              <FiUser className="w-3 h-3 sm:w-4 sm:h-4" />
-                              {assignment.assignedToName}
+              <div className="bg-secondary-50 rounded-lg border border-secondary-200">
+                <div className="max-h-80 overflow-y-auto scroll-elegant">
+                  <div className="divide-y divide-secondary-200">
+                    {filteredAssignments
+                      .filter(a => {
+                        // Comparar diretamente as chaves de data (formato YYYY-MM-DD)
+                        const currentDateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+                        return a.dateKey === currentDateKey;
+                      })
+                      .sort((a, b) => {
+                        // Tarefas não completadas primeiro (false vem antes de true)
+                        if (a.completed !== b.completed) {
+                          return a.completed ? 1 : -1;
+                        }
+                        // Se ambas têm o mesmo status, manter a ordem original
+                        return 0;
+                      })
+                      .map(assignment => (
+                        <div
+                          key={assignment.id}
+                          onClick={() => !assignment.isVirtual && setSelectedAssignment(assignment)}
+                          className={`p-3 sm:p-4 cursor-pointer transition-all hover:bg-secondary-100 ${
+                            assignment.completed
+                              ? 'bg-success-25'
+                              : assignment.isVirtual
+                              ? 'bg-gray-25 opacity-60'
+                              : 'bg-warning-25 hover:bg-warning-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <div className={`flex-shrink-0 w-3 h-3 rounded-full ${
+                                assignment.completed ? 'bg-success-500' : assignment.isVirtual ? 'bg-gray-400' : 'bg-warning-500'
+                              }`}></div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`font-medium text-sm sm:text-base truncate ${
+                                  assignment.completed ? 'line-through text-secondary-500' : assignment.isVirtual ? 'text-secondary-400' : 'text-secondary-900'
+                                }`}>
+                                  {assignment.taskTitle}
+                                </h4>
+                                <div className="flex items-center gap-3 sm:gap-4 mt-1 text-xs sm:text-sm text-secondary-600">
+                                  <div className="flex items-center gap-1">
+                                    <FiUser className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <span className="truncate">{assignment.isVirtual ? 'Não atribuído' : assignment.assignedToName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 bg-secondary-100 px-2 py-0.5 rounded text-xs">
+                                    Peso: {assignment.taskWeight}
+                                  </div>
+                                  {assignment.isVirtual && (
+                                    <span className="text-gray-500 text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                      {assignment.taskFrequency === 'semanal' ? 'Semanal' : assignment.taskFrequency === 'quinzenal' ? 'Quinzenal' : 'Diária'}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 bg-secondary-100 px-2 py-1 rounded">
-                              Peso: {assignment.taskWeight}
+                            <div className="flex-shrink-0 ml-3">
+                              {assignment.completed ? (
+                                <div className="flex items-center gap-1 text-success-600 bg-success-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                                  <FiCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <span className="hidden sm:inline">Concluída</span>
+                                </div>
+                              ) : assignment.isVirtual ? (
+                                <div className="flex items-center gap-1 text-gray-600 bg-gray-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                                  <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <span className="hidden sm:inline">Aguardando</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 text-warning-600 bg-warning-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                                  <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <span className="hidden sm:inline">Pendente</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                        <div className="ml-3 sm:ml-4">
-                          {assignment.completed ? (
-                            <div className="flex items-center gap-1 text-success-600 bg-success-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-                              <FiCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-                              Concluída
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 text-warning-600 bg-warning-100 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
-                              <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
-                              Pendente
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="text-center py-6 sm:py-8 text-secondary-600">

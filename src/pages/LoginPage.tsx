@@ -28,7 +28,8 @@ export function LoginPage() {
       } else {
         await register(formData.name, formData.email, formData.password);
       }
-      navigate('/home/default-home');
+      // Redirecionar para a página inicial que vai buscar os lares do usuário
+      navigate('/');
     } catch (err) {
       setError(isLogin ? 'Email ou senha inválidos' : 'Erro ao criar conta');
     } finally {

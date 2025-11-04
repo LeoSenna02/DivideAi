@@ -54,6 +54,8 @@ export interface HomeMember {
   joinedAt: Date;
   invitedBy: string;
   userName?: string; // Nome do usuário (buscado da coleção users)
+  isOnVacation?: boolean; // Indica se o membro está em modo férias
+  vacationEndDate?: Date; // Data de fim das férias (opcional, para períodos definidos)
 }
 
 export interface MemberInvite {
@@ -85,6 +87,7 @@ export interface DailyAssignment {
   taskId: string;
   taskTitle: string;
   taskWeight: number;
+  taskFrequency?: 'diaria' | 'semanal' | 'quinzenal'; // Frequência da tarefa
   assignedToId: string;
   assignedToName: string;
   homeId: string;
@@ -94,7 +97,11 @@ export interface DailyAssignment {
   skipped?: boolean;
   skippedAt?: Date;
   skippedBy?: string;
+  swapped?: boolean; // Indica se a tarefa foi obtida através de uma troca
+  swappedAt?: Date; // Quando foi trocada
+  swappedWith?: string; // Nome da pessoa com quem foi trocada
   createdAt: Date;
+  isVirtual?: boolean; // Indica se é uma atribuição virtual (não salva no Firestore)
 }
 
 export interface SkippedTask {
@@ -132,3 +139,32 @@ export interface OfferedTask {
   createdAt: Date;
 }
 
+// ============ TROCA DE TAREFAS ============
+
+export interface TaskSwapRequest {
+  id: string;
+  homeId: string;
+  dateKey: string; // Formato: 'YYYY-MM-DD'
+  requestedByUserId: string;
+  requestedByName: string;
+  requestedToUserId: string;
+  requestedToName: string;
+  
+  // Tarefa que o solicitante quer dar
+  offeredTaskId: string;
+  offeredTaskTitle: string;
+  offeredTaskWeight: number;
+  offeredAssignmentId: string;
+  
+  // Tarefa que o solicitante quer receber
+  requestedTaskId: string;
+  requestedTaskTitle: string;
+  requestedTaskWeight: number;
+  requestedAssignmentId: string;
+  
+  status: 'pending' | 'accepted' | 'declined';
+  message?: string; // Mensagem opcional do solicitante
+  respondedAt?: Date;
+  respondedBy?: string; // Quem respondeu
+  createdAt: Date;
+}

@@ -161,14 +161,19 @@ export const distributeDailyTasks = (
   homeId: string
 ): DistributionResult => {
   try {
-    if (members.length === 0) {
+    // Filtrar apenas membros ativos (não em férias)
+    const activeMembers = getActiveMembers(members);
+
+    if (activeMembers.length === 0) {
       return {
         assignments: [],
         updatedScores: new Map(),
         success: false,
-        message: 'Nenhum membro no lar para distribuir tarefas'
+        message: 'Nenhum membro ativo disponível para distribuir tarefas (todos estão em férias)'
       };
     }
+
+    console.log(`Distribuindo tarefas para ${activeMembers.length} membros ativos`);
 
     const today = getDateKey();
     const assignments: DailyAssignment[] = [];
@@ -184,9 +189,9 @@ export const distributeDailyTasks = (
         return false; // Já foi atribuída hoje
       }
 
-      // Buscar última atribuição desta tarefa (ordenar por dateKey, não createdAt)
+      // Buscar última atribuição desta tarefa (excluindo tarefas puladas)
       const lastAssignment = existingAssignments
-        .filter(a => a.taskId === task.id)
+        .filter(a => a.taskId === task.id && !a.skipped)
         .sort((a, b) => b.dateKey.localeCompare(a.dateKey))[0];
 
       // Converter dateKey para Date para verificar frequência
@@ -198,20 +203,20 @@ export const distributeDailyTasks = (
     if (tasksForToday.length === 0) {
       return {
         assignments: [],
-        updatedScores: calculateCurrentScores(members, monthlyScores),
+        updatedScores: calculateCurrentScores(activeMembers, monthlyScores),
         success: true,
         message: 'Nenhuma tarefa nova para hoje'
       };
     }
 
     // Inicializar placar atual
-    const currentScores = calculateCurrentScores(members, monthlyScores);
+    const currentScores = calculateCurrentScores(activeMembers, monthlyScores);
 
     // Distribuir cada tarefa
     tasksForToday.forEach(task => {
       // Sortear membro baseado no placar
-      const selectedUserId = weightedRandomSelection(members, currentScores);
-      const selectedMember = members.find(m => m.userId === selectedUserId)!;
+      const selectedUserId = weightedRandomSelection(activeMembers, currentScores);
+      const selectedMember = activeMembers.find(m => m.userId === selectedUserId)!;
 
       // Criar atribuição
       const assignment: DailyAssignment = {
@@ -293,25 +298,31 @@ export const calculateScoreStatistics = (
   };
 };
 
-// ============ VALIDAÇÃO DE MEMBROS ============
+export const getActiveMembers = (members: HomeMember[]): HomeMember[] => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-/**
- * Valida e garante que todos os membros (admin e member) estão inclusos
- * IMPORTANTE: Admins SEMPRE devem participar da distribuição!
- */
-export const validateMembersForDistribution = (members: HomeMember[]): HomeMember[] => {
-  if (members.length === 0) {
-    return [];
-  }
+  const activeMembers = members.filter(member => {
+    // Excluir se está explicitamente em férias
+    if (member.isOnVacation) {
+      console.log(`Membro ${member.userName} (${member.userId}) está em férias - excluído`);
+      return false;
+    }
 
-  // Remover duplicatas e garantir que todos estão presentes
-  const uniqueMembers = new Map<string, HomeMember>();
-  members.forEach(member => {
-    // Incluir TODOS os membros: admin, member, ou qualquer outro role
-    uniqueMembers.set(member.userId, member);
+    // Excluir se tem data de fim de férias e ainda não passou
+    if (member.vacationEndDate) {
+      const endDate = new Date(member.vacationEndDate);
+      endDate.setHours(0, 0, 0, 0);
+      if (endDate >= today) {
+        console.log(`Membro ${member.userName} (${member.userId}) em férias até ${endDate.toISOString().split('T')[0]} - excluído`);
+        return false;
+      }
+    }
+
+    // Incluir se não está em férias
+    return true;
   });
 
-  const validatedMembers = Array.from(uniqueMembers.values());
-
-  return validatedMembers;
+  console.log(`Total membros: ${members.length}, Membros ativos: ${activeMembers.length}`);
+  return activeMembers;
 };
